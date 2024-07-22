@@ -1,5 +1,1 @@
-export abstract class Component {
-    public componentId(): string {
-        return this.constructor.name
-    }
-}
+export type Component = Object

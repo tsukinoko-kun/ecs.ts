@@ -14,6 +14,10 @@ export class Entity {
         children(new ChildBuilder(this))
         return this
     }
+
+    public toString(): string {
+        return `Entity::${this.id}`
+    }
 }
 
 export class ChildBuilder {

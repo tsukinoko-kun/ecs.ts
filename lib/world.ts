@@ -1,7 +1,8 @@
 import { Entity } from "./entity"
-import type { Component } from "./component"
+import { type Component } from "./component"
 import type { System } from "./system"
 import { Schedule } from "./schedule"
+import { type Ident, identify } from "./identify"
 
 let currentWorld: World | null = null
 
@@ -19,9 +20,9 @@ export function useWorld(): World {
 
 export class World {
     private readonly entities = new Array<Entity>()
-    private readonly components = new Map<Entity, Map<string, Component>>()
+    private readonly components = new Map<Entity, Map<Ident, Component>>()
     private readonly systems = new Map<Schedule, Array<System>>()
-    private readonly resources = new Map<string, Object>()
+    private readonly resources = new Map<Ident, Object>()
 
     public getSystems(): ReadonlyMap<Schedule, ReadonlyArray<System>> {
         return this.systems
@@ -40,11 +41,11 @@ export class World {
         return this.entities
     }
 
-    public getComponents(): ReadonlyMap<Entity, ReadonlyMap<string, Component>> {
+    public getComponents(): ReadonlyMap<Entity, ReadonlyMap<Ident, Component>> {
         return this.components
     }
 
-    public getEntityComponents(e: Entity): ReadonlyMap<string, Component> {
+    public getEntityComponents(e: Entity): ReadonlyMap<Ident, Component> {
         if (!this.components.has(e)) {
             throw new Error(`Entity ${e} does not exist in the world`)
         }
@@ -52,13 +53,12 @@ export class World {
     }
 
     public getResourceSafe<T extends Object>(t: { new (...args: any[]): T }): T | undefined {
-        return this.resources.get(t.name) as T | undefined
+        return this.resources.get(identify(t)) as T | undefined
     }
 
     public getResource<T>(t: { new (...args: any[]): T }): T {
-        const r = this.resources.get(t.name)
+        const r = this.resources.get(identify(t))
         if (!r) {
-            console.debug(this.resources)
             throw new Error(`Resource ${t.name} does not exist`)
         }
         return r as T
@@ -96,7 +96,7 @@ export class World {
         if (!this.components.has(e)) {
             this.components.set(e, new Map())
         }
-        this.components.get(e)!.set(component.componentId(), component)
+        this.components.get(e)!.set(identify(component), component)
     }
 
     public addComponents(e: Entity, ...components: Component[]): void {
@@ -108,15 +108,15 @@ export class World {
             this.components.set(e, new Map())
         }
         for (const component of components) {
-            this.components.get(e)!.set(component.componentId(), component)
+            this.components.get(e)!.set(identify(component), component)
         }
     }
 
     public spawn(...components: Component[]): Entity {
         const e = this.spawnEmpty()
-        const entityComponents = new Map<string, Component>()
+        const entityComponents = new Map<Ident, Component>()
         for (const component of components) {
-            entityComponents.set(component.componentId(), component)
+            entityComponents.set(identify(component), component)
         }
         this.components.set(e, entityComponents)
         return e
@@ -130,6 +130,6 @@ export class World {
     }
 
     public insertResource<T extends Object>(r: T): void {
-        this.resources.set(r.constructor.name, r)
+        this.resources.set(identify(r), r)
     }
 }

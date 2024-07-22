@@ -1,10 +1,7 @@
-import { Component } from "../../component"
-
-export class UiText extends Component {
+export class UiText {
     public value: string
 
     constructor(value: string) {
-        super()
         this.value = value
     }
 }

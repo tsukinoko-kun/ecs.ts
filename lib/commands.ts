@@ -11,5 +11,10 @@ export const Commands = {
         const world = useWorld()
         world.insertResource(resource)
     },
-    trigger(event: Event) {},
+    trigger(event: Event) {
+    },
+    components(entity: Entity): IterableIterator<Component> {
+        const world = useWorld()
+        return world.getEntityComponents(entity).values()
+    },
 }
