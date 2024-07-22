@@ -1,0 +1,17 @@
+{
+    "name": "test",
+    "private": true,
+    "type": "module",
+    "source": "src/index.html",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "dependencies": {
+        "@tsukinoko-kun/ecs.ts": "workspace:*",
+        "vite": "^5.3.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.11"
+    }
+}

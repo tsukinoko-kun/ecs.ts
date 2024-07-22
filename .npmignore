@@ -1,0 +1,9 @@
+.github/
+test/
+dist/
+*.js
+.DS_Store
+.editorconfig
+pnpm-lock.yaml
+pnpm-workspace.yaml
+prettier.config.mjs
