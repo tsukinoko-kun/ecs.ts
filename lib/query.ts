@@ -2,14 +2,35 @@ import type { Component } from "./component"
 import { useWorld } from "./world"
 import { type Ident, identify } from "./identify"
 
-export type QueryRule = (components: IterableIterator<Ident>) => boolean
+export type QueryRule = (components: Array<Ident>) => boolean
 
-export function queryAnd(...components: Component[]): QueryRule {
+type Q = (<T extends any[]>(
+    types: { [K in keyof T]: new (...arg: any[]) => T[K] },
+    ...filter: QueryRule[]
+) => Generator<T>) & {
+    /**
+     * Query filter function that requires more components to be present then on the query itself
+     */
+    and: (...components: Component[]) => QueryRule
+    /**
+     * Query filter function that requires components to **not** be present
+     */
+    not: (...components: Component[]) => QueryRule
+    /**
+     * Same as query, but only queries the root entities (entities without parents)
+     */
+    root: <T extends any[]>(
+        types: { [K in keyof T]: new (...arg: any[]) => T[K] },
+        ...filter: QueryRule[]
+    ) => Generator<T>
+}
+
+function queryAnd(...components: Component[]): QueryRule {
     const andComponentIdents = components.map(identify)
 
-    return (test: IterableIterator<Ident>) => {
-        for (const tc of test) {
-            if (!andComponentIdents.includes(tc)) {
+    return (test: Array<Ident>) => {
+        for (const ident of andComponentIdents) {
+            if (!test.includes(ident)) {
                 return false
             }
         }
@@ -18,12 +39,21 @@ export function queryAnd(...components: Component[]): QueryRule {
     }
 }
 
-// query([UiText], queryAnd(UiText, UiText))
+export function queryNot(...components: Component[]): QueryRule {
+    const notComponentIdents = components.map(identify)
 
-/**
- * Get all entities with the specified components (children are included)
- */
-export function* query<T extends any[]>(
+    return (test: Array<Ident>) => {
+        for (const ident of notComponentIdents) {
+            if (test.includes(ident)) {
+                return false
+            }
+        }
+
+        return true
+    }
+}
+
+function* normalQuery<T extends any[]>(
     types: { [K in keyof T]: new (...arg: any[]) => T[K] },
     ...filter: QueryRule[]
 ): Generator<T> {
@@ -55,8 +85,7 @@ export function* query<T extends any[]>(
 
         // apply filters
         for (const f of filter) {
-            if (!f(c.keys())) {
-                console.log("filter failed")
+            if (!f(Array.from(c.keys()))) {
                 continue entity_loop
             }
         }
@@ -81,10 +110,7 @@ export function* query<T extends any[]>(
     }
 }
 
-/**
- * Same as query, but only queries the root entities (entities without parents)
- */
-export function* queryRoot<T extends any[]>(
+function* queryRoot<T extends any[]>(
     types: { [K in keyof T]: new (...arg: any[]) => T[K] },
     ...filter: QueryRule[]
 ): Generator<T> {
@@ -117,8 +143,7 @@ export function* queryRoot<T extends any[]>(
 
         // apply filters
         for (const f of filter) {
-            if (!f(c.keys())) {
-                console.log("filter failed")
+            if (!f(Array.from(c.keys()))) {
                 continue entity_loop
             }
         }
@@ -142,3 +167,11 @@ export function* queryRoot<T extends any[]>(
         yield x
     }
 }
+
+/**
+ * Get all entities with the specified components (children are included)
+ */
+export const query = normalQuery as Q
+query.and = queryAnd
+query.not = queryNot
+query.root = queryRoot

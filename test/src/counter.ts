@@ -1,23 +1,3 @@
-# ECS.ts
-
-Strongly inspired by Bevy
-
-## Example
-
-```ts
-// index.ts
-import { App, DefaultPlugin, HtmlPlugin } from "@tsukinoko-kun/ecs.ts"
-import { counterPlugin } from "./counter"
-
-const app = new App()
-
-app.addPlugin(DefaultPlugin).addPlugin(HtmlPlugin("#app")).addPlugin(counterPlugin)
-
-app.run()
-```
-
-```ts
-// counter.ts
 import {
     Commands,
     LogicalButtonInput,
@@ -64,7 +44,7 @@ function incrementCounter() {
 
 function updateButtonText() {
     const counter = res(Counter)
-    for (const [text] of query([UiText, CounterMarker])) {
+    for (const [text] of query([UiText], query.and(CounterMarker))) {
         if (counter.value === 0) {
             text.value = "Press 'b' to increment the counter!"
         } else {
@@ -79,4 +59,3 @@ export function counterPlugin(world: World) {
     world.addSystem(Schedule.Update, incrementCounter)
     world.addSystem(Schedule.Update, updateButtonText)
 }
-```
