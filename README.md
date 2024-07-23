@@ -64,7 +64,7 @@ function incrementCounter() {
 
 function updateButtonText() {
     const counter = res(Counter)
-    for (const [text] of query([UiText, CounterMarker])) {
+    for (const [text] of query([UiText], query.and(CounterMarker))) {
         if (counter.value === 0) {
             text.value = "Press 'b' to increment the counter!"
         } else {
