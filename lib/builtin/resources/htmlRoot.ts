@@ -1,5 +1,5 @@
 export class HtmlRoot {
-    public readonly root: Element
+    public readonly element: Element
 
     public constructor(selector: string) {
         const root = document.querySelector(selector)
@@ -7,6 +7,6 @@ export class HtmlRoot {
             throw new Error(`Root element with selector ${selector} not found in the document`)
         }
 
-        this.root = root
+        this.element = root
     }
 }

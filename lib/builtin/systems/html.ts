@@ -11,24 +11,26 @@ export function renderHtmlRoot(): void {
     let el = document.createElement("div")
 
     function render(e: Entity, el: HTMLElement): void {
-        let entitiesHtml = document.createElement("div") as HTMLElement
+        let entityEl = document.createElement("div") as HTMLElement
 
         for (const c of Commands.components(e)) {
             if (c instanceof UiText) {
-                entitiesHtml.innerText += c.value
+                entityEl.innerText += c.value
             } else if (c instanceof UiStyle) {
-                entitiesHtml.style.cssText = c.css
+                entityEl.style.cssText = c.css
             } else if (c instanceof UiButton) {
-                const innerHtml = entitiesHtml.innerHTML
-                entitiesHtml = document.createElement("button")
-                entitiesHtml.innerHTML = innerHtml
+                const innerHtml = entityEl.innerHTML
+                const css = entityEl.style.cssText
+                entityEl = document.createElement("button")
+                entityEl.innerHTML = innerHtml
+                entityEl.style.cssText = css
             }
         }
 
-        el.appendChild(entitiesHtml)
+        el.appendChild(entityEl)
 
         for (const child of e.children) {
-            render(child, entitiesHtml)
+            render(child, entityEl)
         }
     }
 
@@ -37,7 +39,7 @@ export function renderHtmlRoot(): void {
     }
 
     const htmlStr = el.innerHTML
-    if (root.root.innerHTML !== htmlStr) {
-        root.root.innerHTML = htmlStr
+    if (root.element.innerHTML !== htmlStr) {
+        root.element.innerHTML = htmlStr
     }
 }

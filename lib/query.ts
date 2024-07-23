@@ -1,6 +1,7 @@
 import type { Component } from "./component"
 import { useWorld } from "./world"
 import { type Ident, identify } from "./identify"
+import { Entity } from "./entity"
 
 export type QueryRule = (components: Array<Ident>) => boolean
 
@@ -65,7 +66,7 @@ function* normalQuery<T extends any[]>(
     // fill the requiredComponents array with the names of the required components
     for (let i = 0; i < types.length; i++) {
         const t = types[i]
-        if (t == undefined || t.name === "Entity") {
+        if (t == undefined || t.name === Entity.name) {
             continue
         }
 
@@ -98,7 +99,7 @@ function* normalQuery<T extends any[]>(
                 continue
             }
 
-            if (t.name === "Entity") {
+            if (t.name === Entity.name) {
                 x[i] = e
                 continue
             }
@@ -122,7 +123,7 @@ function* queryRoot<T extends any[]>(
     // fill the requiredComponents array with the names of the required components
     for (let i = 0; i < types.length; i++) {
         const t = types[i]
-        if (t == undefined || t.name === "Entity") {
+        if (t == undefined || t.name === Entity.name) {
             continue
         }
 
@@ -156,7 +157,7 @@ function* queryRoot<T extends any[]>(
                 continue
             }
 
-            if (t.name === "Entity") {
+            if (t.name === Entity.name) {
                 x[i] = e
                 continue
             }
