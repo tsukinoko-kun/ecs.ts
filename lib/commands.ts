@@ -12,6 +12,10 @@ export const Commands = {
         world.insertResource(resource)
     },
     trigger(event: Event) {},
+    getEntityById(id: number | string): Entity {
+        const world = useWorld()
+        return world.getEntityById(id)
+    },
     components(entity: Entity): IterableIterator<Component> {
         const world = useWorld()
         return world.getEntityComponents(entity).values()

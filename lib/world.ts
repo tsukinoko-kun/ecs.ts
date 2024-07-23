@@ -18,6 +18,13 @@ export function useWorld(): World {
     return currentWorld
 }
 
+export function inWorld(world: World, fn: (world: World) => void): void {
+    const oldWorld = currentWorld
+    setCurrentWorld(world)
+    fn(world)
+    setCurrentWorld(oldWorld)
+}
+
 export class World {
     private readonly entities = new Array<Entity>()
     private readonly components = new Map<Entity, Map<Ident, Component>>()
@@ -39,6 +46,19 @@ export class World {
 
     public getEntities(): ReadonlyArray<Entity> {
         return this.entities
+    }
+
+    public getAllEntities(): IterableIterator<Entity> {
+        return this.components.keys()
+    }
+
+    public getEntityById(id: number | string): Entity {
+        for (const e of this.getAllEntities()) {
+            if (e.id === id || e.toString() === id) {
+                return e
+            }
+        }
+        throw new Error(`Entity with id ${id} not found in world`)
     }
 
     public getComponents(): ReadonlyMap<Entity, ReadonlyMap<Ident, Component>> {

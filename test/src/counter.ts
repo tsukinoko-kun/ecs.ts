@@ -1,10 +1,10 @@
 import {
     Commands,
-    LogicalButtonInput,
     query,
     res,
     Schedule,
     UiButton,
+    UiInteraction,
     UiNode,
     UiStyle,
     UiText,
@@ -31,14 +31,15 @@ function spawnUi() {
         parent.spawn(new UiText("c"), new UiStyle().set("color", "green"))
     })
 
-    Commands.spawn(new CounterMarker(), new UiButton(), new UiText("Click me!"))
+    Commands.spawn(new CounterMarker(), new UiButton(), new UiText("Click me!"), new UiInteraction())
 }
 
 function incrementCounter() {
-    const btn = res(LogicalButtonInput)
-    if (btn.pressed("b")) {
-        const counter = res(Counter)
-        counter.value++
+    for (const [btn] of query([UiInteraction], query.and(CounterMarker))) {
+        if (btn.pressed) {
+            const counter = res(Counter)
+            counter.value++
+        }
     }
 }
 

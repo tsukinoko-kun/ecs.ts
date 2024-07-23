@@ -1,4 +1,5 @@
 export * from "./uiButton"
+export * from "./uiInteraction"
 export * from "./uiNode"
 export * from "./uiStyle"
 export * from "./uiText"

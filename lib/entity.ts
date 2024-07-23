@@ -4,7 +4,7 @@ import { useWorld } from "./world"
 export class Entity {
     private static current = 0
     public readonly children = new Array<Entity>()
-    private readonly id: number
+    public readonly id: number
 
     public constructor() {
         this.id = Entity.current++
@@ -16,7 +16,7 @@ export class Entity {
     }
 
     public toString(): string {
-        return `Entity::${this.id}`
+        return `Entity(${this.id})`
     }
 }
 

@@ -55,6 +55,7 @@ export class App {
                 await system()
             }
 
+            // cleanup builtins
             {
                 const pb = this.world.getResourceSafe(PhysicalButtonInput)
                 if (pb) {

@@ -1,9 +1,45 @@
 import { res } from "../../resource"
 import { HtmlRoot } from "../resources"
 import { query } from "../../query"
-import { UiButton, UiStyle, UiText } from "../components"
+import { UiButton, UiInteraction, UiStyle, UiText } from "../components"
 import { Entity } from "../../entity"
+import { inWorld, useWorld } from "../../world"
 import { Commands } from "../../commands"
+
+export function htmlInteraction(): void {
+    const root = res(HtmlRoot)
+    const world = useWorld()
+
+    ;(root.element as HTMLElement).addEventListener("mousedown", (ev) => {
+        inWorld(world, () => {
+            let target = ev.target as Node | null
+            while (target && !(target instanceof HTMLElement)) {
+                target = target.parentElement
+            }
+            while (target) {
+                let id = (target as HTMLElement).id
+                if (!id.startsWith("Entity(")) {
+                    target = target.parentElement
+                    continue
+                }
+                const e = Commands.getEntityById(id)
+                for (const c of Commands.components(e)) {
+                    if (c instanceof UiInteraction) {
+                        c.triggerDown()
+                    }
+                }
+                target = target.parentElement
+            }
+        })
+        ;(root.element as HTMLElement).addEventListener("mouseup", (ev) => {
+            inWorld(world, () => {
+                for (const [interaction] of query([UiInteraction])) {
+                    interaction.triggerUp()
+                }
+            })
+        })
+    })
+}
 
 export function renderHtmlRoot(): void {
     const root = res(HtmlRoot)
@@ -28,6 +64,8 @@ export function renderHtmlRoot(): void {
                 }
             }
         }
+
+        entityEl.id = e.toString()
 
         el.appendChild(entityEl)
 
