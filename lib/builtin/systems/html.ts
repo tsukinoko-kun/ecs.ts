@@ -23,7 +23,9 @@ export function renderHtmlRoot(): void {
                 const css = entityEl.style.cssText
                 entityEl = document.createElement("button")
                 entityEl.innerHTML = innerHtml
-                entityEl.style.cssText = css
+                if (css) {
+                    entityEl.style.cssText = css
+                }
             }
         }
 
@@ -38,8 +40,31 @@ export function renderHtmlRoot(): void {
         render(e, el)
     }
 
-    const htmlStr = el.innerHTML
-    if (root.element.innerHTML !== htmlStr) {
-        root.element.innerHTML = htmlStr
+    diffRender(root.element, el)
+}
+
+function diffRender(old: Element, next: HTMLElement) {
+    if (old.childNodes.length !== next.childNodes.length) {
+        old.innerHTML = next.innerHTML
+        return
+    }
+    const l = old.childNodes.length
+
+    if (l === 0) {
+        old.innerHTML = next.innerHTML
+        return
+    }
+
+    for (let i = 0; i < l; i++) {
+        const oldNode = old.childNodes[i]!
+        const nextNode = next.childNodes[i]!
+
+        if (oldNode instanceof HTMLElement && nextNode instanceof HTMLElement) {
+            diffRender(oldNode, nextNode)
+        } else {
+            if (oldNode.textContent !== nextNode.textContent) {
+                oldNode.textContent = nextNode.textContent
+            }
+        }
     }
 }
