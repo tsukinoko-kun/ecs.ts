@@ -3,6 +3,7 @@ import { setCurrentWorld, World } from "./world"
 import type { System } from "./system"
 import { Schedule } from "./schedule"
 import { Time } from "./builtin/resources/time"
+import { LogicalButtonInput, PhysicalButtonInput } from "./builtin"
 
 export class App {
     private readonly plugins = new Array<Plugin>()
@@ -18,22 +19,22 @@ export class App {
         return this
     }
 
-    public run(): void {
+    public async run(): Promise<void> {
         setCurrentWorld(this.world)
 
         for (const system of this.world.getSystemsBySchedule(Schedule.PreStart)) {
-            system()
+            await system()
         }
         for (const system of this.world.getSystemsBySchedule(Schedule.Start)) {
-            system()
+            await system()
         }
         for (const system of this.world.getSystemsBySchedule(Schedule.PostStart)) {
-            system()
+            await system()
         }
 
         setCurrentWorld(null)
 
-        const update = (elapsed: number) => {
+        const update = async (elapsed: number) => {
             setCurrentWorld(this.world)
 
             {
@@ -45,14 +46,27 @@ export class App {
             }
 
             for (const system of this.world.getSystemsBySchedule(Schedule.PreUpdate)) {
-                system()
+                await system()
             }
             for (const system of this.world.getSystemsBySchedule(Schedule.Update)) {
-                system()
+                await system()
             }
             for (const system of this.world.getSystemsBySchedule(Schedule.PostUpdate)) {
-                system()
+                await system()
             }
+
+            {
+                const pb = this.world.getResourceSafe(PhysicalButtonInput)
+                if (pb) {
+                    pb.clear()
+                }
+
+                const lb = this.world.getResourceSafe(LogicalButtonInput)
+                if (lb) {
+                    lb.clear()
+                }
+            }
+
             setCurrentWorld(null)
             requestAnimationFrame(update)
         }
