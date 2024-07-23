@@ -54,7 +54,7 @@ export class World {
 
     public getEntityById(id: number | string): Entity {
         for (const e of this.getAllEntities()) {
-            if (e.id === id || e.toString() === id) {
+            if (e.id == id || e.toString() == id) {
                 return e
             }
         }

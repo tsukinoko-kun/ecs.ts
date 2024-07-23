@@ -12,23 +12,12 @@ export function htmlInteraction(): void {
 
     ;(root.element as HTMLElement).addEventListener("mousedown", (ev) => {
         inWorld(world, () => {
-            let target = ev.target as Node | null
-            while (target && !(target instanceof HTMLElement)) {
-                target = target.parentElement
-            }
-            while (target) {
-                let id = (target as HTMLElement).id
-                if (!id.startsWith("Entity(")) {
-                    target = target.parentElement
-                    continue
-                }
-                const e = Commands.getEntityById(id)
+            for (const e of elements(ev)) {
                 for (const c of Commands.components(e)) {
                     if (c instanceof UiInteraction) {
                         c.triggerDown()
                     }
                 }
-                target = target.parentElement
             }
         })
         ;(root.element as HTMLElement).addEventListener("mouseup", (ev) => {
@@ -38,7 +27,35 @@ export function htmlInteraction(): void {
                 }
             })
         })
+        ;(root.element as HTMLElement).addEventListener("click", (ev) => {
+            inWorld(world, () => {
+                for (const e of elements(ev)) {
+                    for (const c of Commands.components(e)) {
+                        if (c instanceof UiInteraction) {
+                            c.triggerClick()
+                        }
+                    }
+                }
+            })
+        })
     })
+}
+
+function* elements(ev: MouseEvent): Generator<Entity> {
+    let target = ev.target as Node | null
+    while (target && !(target instanceof HTMLElement)) {
+        target = target.parentElement
+    }
+    while (target) {
+        let id = (target as HTMLElement).dataset.entity
+        if (!id) {
+            target = target.parentElement
+            continue
+        }
+        const e = Commands.getEntityById(id)
+        yield e
+        target = target.parentElement
+    }
 }
 
 export function renderHtmlRoot(): void {
@@ -65,7 +82,7 @@ export function renderHtmlRoot(): void {
             }
         }
 
-        entityEl.id = e.toString()
+        entityEl.dataset.entity = e.id.toString()
 
         el.appendChild(entityEl)
 

@@ -3,7 +3,8 @@ import { setCurrentWorld, World } from "./world"
 import type { System } from "./system"
 import { Schedule } from "./schedule"
 import { Time } from "./builtin/resources/time"
-import { LogicalButtonInput, PhysicalButtonInput } from "./builtin"
+import { LogicalButtonInput, PhysicalButtonInput, UiInteraction } from "./builtin"
+import { query } from "./query"
 
 export class App {
     private readonly plugins = new Array<Plugin>()
@@ -65,6 +66,10 @@ export class App {
                 const lb = this.world.getResourceSafe(LogicalButtonInput)
                 if (lb) {
                     lb.clear()
+                }
+
+                for (const [interaction] of query([UiInteraction])) {
+                    interaction.resetClick()
                 }
             }
 

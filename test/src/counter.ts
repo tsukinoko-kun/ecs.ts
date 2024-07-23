@@ -36,7 +36,7 @@ function spawnUi() {
 
 function incrementCounter() {
     for (const [btn] of query([UiInteraction], query.and(CounterMarker))) {
-        if (btn.pressed) {
+        if (btn.clicked) {
             const counter = res(Counter)
             counter.value++
         }

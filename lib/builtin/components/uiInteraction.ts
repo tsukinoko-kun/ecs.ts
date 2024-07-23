@@ -1,4 +1,10 @@
 export class UiInteraction {
+    private _clicked = false
+
+    public get clicked(): boolean {
+        return this._clicked
+    }
+
     private _pressed = false
 
     public get pressed(): boolean {
@@ -11,5 +17,13 @@ export class UiInteraction {
 
     public triggerUp() {
         this._pressed = false
+    }
+
+    public triggerClick() {
+        this._clicked = true
+    }
+
+    public resetClick() {
+        this._clicked = false
     }
 }
