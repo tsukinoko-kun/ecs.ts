@@ -7,11 +7,18 @@ export const Commands = {
         const world = useWorld()
         return world.spawn(...components)
     },
+    despawn(entity: Entity, keepChildren = false): void {
+        const world = useWorld()
+        world.despawn(entity, keepChildren)
+    },
+    addComponents(entity: Entity, ...components: Component[]): void {
+        const world = useWorld()
+        world.addComponents(entity, ...components)
+    },
     insertResource<T extends Object>(resource: T): void {
         const world = useWorld()
         world.insertResource(resource)
     },
-    trigger(event: Event) {},
     getEntityById(id: number | string): Entity {
         const world = useWorld()
         return world.getEntityById(id)

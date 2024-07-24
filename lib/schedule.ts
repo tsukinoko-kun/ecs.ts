@@ -1,8 +1,10 @@
 export enum Schedule {
-    PreStart,
-    Start,
-    PostStart,
+    PreStartup,
+    Startup,
+    PostStartup,
+    First,
     PreUpdate,
     Update,
     PostUpdate,
+    Last,
 }

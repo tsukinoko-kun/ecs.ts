@@ -1,12 +1,14 @@
 import type { Plugin } from "../../plugin"
 import { HtmlRoot } from "../resources"
 import { Schedule } from "../../schedule"
-import { htmlInteraction, renderHtmlRoot } from "../systems"
+import { cleanupHtmlInteraction, htmlInteraction, renderHtmlRoot } from "../systems"
+import { Commands } from "../../commands"
 
 export function HtmlPlugin(rootSelector: string): Plugin {
-    return (world) => {
-        world.insertResource(new HtmlRoot(rootSelector))
-        world.addSystem(Schedule.Update, renderHtmlRoot)
-        world.addSystem(Schedule.Start, htmlInteraction)
+    return (app) => {
+        Commands.insertResource(new HtmlRoot(rootSelector))
+        app.addSystem(Schedule.Update, renderHtmlRoot)
+        app.addSystem(Schedule.Startup, htmlInteraction)
+        app.addSystem(Schedule.Last, cleanupHtmlInteraction)
     }
 }

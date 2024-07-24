@@ -3,18 +3,25 @@
     "version": "1.0.0",
     "description": "TypeScript Entity Component System based Web UI library",
     "main": "lib/index.ts",
+    "bin": {
+        "ecs": "bin/ecs.mjs"
+    },
     "scripts": {
-        "test:dev": "pnpm -r --filter=\"test\" run dev",
-        "test:build": "pnpm -r --filter=\"test\" run build"
+        "demo:dev": "pnpm -r --filter=\"demo\" run dev",
+        "demo:build": "pnpm -r --filter=\"demo\" run build"
     },
     "keywords": [],
     "author": "Frank Mayer",
     "license": "MIT",
     "devDependencies": {
+        "@types/node": "^20.14.11",
         "prettier": "^3.3.3",
         "prettier-plugin-organize-attributes": "^1.0.0",
         "prettier-plugin-organize-imports": "^4.0.0",
         "prettier-plugin-tailwindcss": "^0.6.5"
     },
-    "dependencies": {}
+    "dependencies": {
+        "playwright": "^1.45.3",
+        "vite": "^5.3.4"
+    }
 }

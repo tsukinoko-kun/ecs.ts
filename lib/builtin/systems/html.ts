@@ -1,7 +1,7 @@
 import { res } from "../../resource"
 import { HtmlRoot } from "../resources"
 import { query } from "../../query"
-import { UiButton, UiInteraction, UiStyle, UiText } from "../components"
+import { UiAnchor, UiButton, UiInteraction, UiStyle, UiText } from "../components"
 import { Entity } from "../../entity"
 import { inWorld, useWorld } from "../../world"
 import { Commands } from "../../commands"
@@ -58,13 +58,29 @@ function* elements(ev: MouseEvent): Generator<Entity> {
     }
 }
 
+export function cleanupHtmlInteraction(): void {
+    for (const [interaction] of query([UiInteraction])) {
+        interaction.resetClick()
+    }
+}
+
 export function renderHtmlRoot(): void {
     const root = res(HtmlRoot)
 
-    let el = document.createElement("div")
+    let el = document.createElement("div") as HTMLElement
 
     function render(e: Entity, el: HTMLElement): void {
         let entityEl = document.createElement("div") as HTMLElement
+
+        function changeTag(name: string) {
+            const innerHtml = entityEl.innerHTML
+            const css = entityEl.style.cssText
+            entityEl = document.createElement(name)
+            entityEl.innerHTML = innerHtml
+            if (css) {
+                entityEl.style.cssText = css
+            }
+        }
 
         for (const c of Commands.components(e)) {
             if (c instanceof UiText) {
@@ -72,13 +88,11 @@ export function renderHtmlRoot(): void {
             } else if (c instanceof UiStyle) {
                 entityEl.style.cssText = c.css
             } else if (c instanceof UiButton) {
-                const innerHtml = entityEl.innerHTML
-                const css = entityEl.style.cssText
-                entityEl = document.createElement("button")
-                entityEl.innerHTML = innerHtml
-                if (css) {
-                    entityEl.style.cssText = css
-                }
+                changeTag("button")
+            } else if (c instanceof UiAnchor) {
+                changeTag("a")
+                ;(entityEl as HTMLAnchorElement).href = c.href
+                ;(entityEl as HTMLAnchorElement).target = c.target
             }
         }
 

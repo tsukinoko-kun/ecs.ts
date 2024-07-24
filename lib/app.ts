@@ -1,17 +1,17 @@
 import type { Plugin } from "./plugin"
-import { setCurrentWorld, World } from "./world"
+import { inWorld, setCurrentWorld, World } from "./world"
 import type { System } from "./system"
 import { Schedule } from "./schedule"
-import { Time } from "./builtin/resources/time"
-import { LogicalButtonInput, PhysicalButtonInput, UiInteraction } from "./builtin"
-import { query } from "./query"
+import { Time } from "./builtin"
 
 export class App {
     private readonly plugins = new Array<Plugin>()
     private readonly world = new World()
 
     public addPlugin(plugin: Plugin): this {
-        plugin(this.world)
+        inWorld(this.world, () => {
+            plugin(this)
+        })
         return this
     }
 
@@ -23,13 +23,13 @@ export class App {
     public async run(): Promise<void> {
         setCurrentWorld(this.world)
 
-        for (const system of this.world.getSystemsBySchedule(Schedule.PreStart)) {
+        for (const system of this.world.getSystemsBySchedule(Schedule.PreStartup)) {
             await system()
         }
-        for (const system of this.world.getSystemsBySchedule(Schedule.Start)) {
+        for (const system of this.world.getSystemsBySchedule(Schedule.Startup)) {
             await system()
         }
-        for (const system of this.world.getSystemsBySchedule(Schedule.PostStart)) {
+        for (const system of this.world.getSystemsBySchedule(Schedule.PostStartup)) {
             await system()
         }
 
@@ -46,6 +46,10 @@ export class App {
                 }
             }
 
+            for (const system of this.world.getSystemsBySchedule(Schedule.First)) {
+                await system()
+            }
+
             for (const system of this.world.getSystemsBySchedule(Schedule.PreUpdate)) {
                 await system()
             }
@@ -56,21 +60,8 @@ export class App {
                 await system()
             }
 
-            // cleanup builtins
-            {
-                const pb = this.world.getResourceSafe(PhysicalButtonInput)
-                if (pb) {
-                    pb.clear()
-                }
-
-                const lb = this.world.getResourceSafe(LogicalButtonInput)
-                if (lb) {
-                    lb.clear()
-                }
-
-                for (const [interaction] of query([UiInteraction])) {
-                    interaction.resetClick()
-                }
+            for (const system of this.world.getSystemsBySchedule(Schedule.Last)) {
+                await system()
             }
 
             setCurrentWorld(null)

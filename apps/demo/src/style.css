@@ -1,0 +1,43 @@
+:root {
+    color-scheme: dark light;
+    font-family: sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: 5em;
+}
+
+h2 {
+    font-size: 4em;
+}
+
+h3 {
+    font-size: 3.5em;
+}
+
+h4 {
+    font-size: 3em;
+}
+
+h5 {
+    font-size: 2.5em;
+}
+
+h6 {
+    font-size: 2em;
+}
+
+p {
+    text-wrap: pretty;
+}

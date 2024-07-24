@@ -1,11 +1,11 @@
 {
-    "name": "test",
+    "name": "demo",
     "private": true,
     "type": "module",
     "source": "src/index.html",
     "scripts": {
-        "dev": "vite",
-        "build": "vite build"
+        "dev": "ecs dev",
+        "build": "ecs build"
     },
     "dependencies": {
         "@tsukinoko-kun/ecs.ts": "workspace:*",

@@ -1,3 +1,3 @@
-import type { World } from "./world"
+import type { App } from "./app"
 
-export type Plugin = (world: World) => void
+export type Plugin = (app: App) => void

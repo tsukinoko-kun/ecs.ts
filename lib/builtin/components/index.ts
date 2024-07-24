@@ -1,3 +1,4 @@
+export * from "./uiAnchor"
 export * from "./uiButton"
 export * from "./uiInteraction"
 export * from "./uiNode"

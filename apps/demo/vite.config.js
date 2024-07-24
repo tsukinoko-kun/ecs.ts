@@ -6,5 +6,6 @@ export default defineConfig({
     base: "/ecs.ts/",
     build: {
         outDir: join(process.cwd(), "dist"),
+        emptyOutDir: true,
     },
 })

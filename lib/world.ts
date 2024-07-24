@@ -8,6 +8,11 @@ let currentWorld: World | null = null
 
 /** @internal */
 export function setCurrentWorld(world: World | null) {
+    if (currentWorld && world && currentWorld !== world) {
+        throw new Error(
+            "Tried to set the world context while it was already set. The reason for this is likely because there are multiple worlds being used at the same time.",
+        )
+    }
     currentWorld = world
 }
 
@@ -36,12 +41,7 @@ export class World {
     }
 
     public getSystemsBySchedule(schedule: Schedule): ReadonlyArray<System> {
-        for (const [regSchedule, regSystem] of this.systems) {
-            if (regSchedule === schedule) {
-                return regSystem
-            }
-        }
-        return []
+        return this.systems.get(schedule) ?? []
     }
 
     public getEntities(): ReadonlyArray<Entity> {
@@ -84,6 +84,7 @@ export class World {
         return r as T
     }
 
+    /** @internal */
     public spawnEmpty(): Entity {
         const e = new Entity()
         this.entities.push(e)
@@ -140,6 +141,30 @@ export class World {
         }
         this.components.set(e, entityComponents)
         return e
+    }
+
+    public despawn(e: Entity, keepChildren = false): void {
+        if (!this.doesEntityExist(e, true)) {
+            throw new Error(`Entity ${e} does not exist in the world`)
+        }
+
+        if (this.components.has(e)) {
+            this.components.delete(e)
+        }
+
+        const index = this.entities.indexOf(e)
+        if (index >= 0) {
+            this.entities.splice(index, 1)
+        }
+
+        if (!keepChildren) {
+            for (const entity of this.getAllEntities()) {
+                const childIndex = entity.children.indexOf(e)
+                if (childIndex >= 0) {
+                    entity.children.splice(childIndex, 1)
+                }
+            }
+        }
     }
 
     public addSystem(schedule: Schedule, system: System): void {
