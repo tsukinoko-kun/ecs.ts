@@ -2,6 +2,16 @@
 
 Strongly inspired by Bevy
 
+## Installation
+
+```shell
+npm i @tsukinoko-kun/ecs.ts
+```
+
+```shell
+pnpm add @tsukinoko-kun/ecs.ts
+```
+
 ## Build
 
 ECS.ts comes with a build script that is based on Vite and Playwright.  
