@@ -1,0 +1,29 @@
+name: npm
+
+on:
+    release:
+        types: [created]
+
+jobs:
+    publish-npm:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Git Checkout
+              uses: actions/checkout@v4
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4.0.0
+              with:
+                  version: latest
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v4.0.2
+              with:
+                  node-version: lts/*
+                  cache: pnpm
+                  registry-url: https://registry.npmjs.org/
+            - name: Install Dependencies
+              run: pnpm install
+            - name: Prettier check
+              run: pnpm exec prettier --check .
+            - run: npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.npm_token}}

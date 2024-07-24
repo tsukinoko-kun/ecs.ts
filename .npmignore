@@ -1,7 +1,5 @@
 .github/
-test/
-dist/
-*.js
+apps/
 .DS_Store
 .editorconfig
 pnpm-lock.yaml

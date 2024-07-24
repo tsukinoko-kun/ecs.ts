@@ -1,6 +1,6 @@
 {
     "name": "@tsukinoko-kun/ecs.ts",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "description": "TypeScript Entity Component System based Web UI library",
     "main": "lib/index.ts",
     "bin": {

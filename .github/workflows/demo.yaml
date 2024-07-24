@@ -3,6 +3,12 @@ name: Deploy Demo
 on:
     push:
         branches: ["main"]
+        paths:
+            - ".github/workflows/demo.yaml"
+            - "apps/demo/**"
+            - "pnpm-lock.yaml"
+            - "package.json"
+            - "lib/**"
     workflow_dispatch:
 
 permissions:
