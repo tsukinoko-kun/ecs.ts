@@ -3,6 +3,11 @@
     "version": "0.1.0",
     "description": "TypeScript Entity Component System based Web UI library",
     "main": "lib/index.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tsukinoko-kun/ecs.ts.git"
+    },
+    "bugs": "https://github.com/tsukinoko-kun/ecs.ts/issues",
     "bin": {
         "ecs": "bin/ecs.mjs"
     },
