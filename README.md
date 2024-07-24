@@ -79,14 +79,14 @@ world.addSystem(Schedule.Update, mySystem)
 
 When adding a system to the world, you can specify on which schedule it should run.
 
-- `Schedule.PreStartup` runs once and is the first system to run
-- `Schedule.Startup` runs once at the start of the application
-- `Schedule.PostStartup` runs once and is the last system to run during the startup phase
-- `Schedule.First` is the first system to run every frame
-- `Schedule.PreUpdate` runs every frame before the update systems
-- `Schedule.Update` runs every frame
-- `Schedule.PostUpdate` runs every frame after the update systems
-- `Schedule.Last` is the last schedule to run every frame and is meant for cleanup tasks
+-   `Schedule.PreStartup` runs once and is the first system to run
+-   `Schedule.Startup` runs once at the start of the application
+-   `Schedule.PostStartup` runs once and is the last system to run during the startup phase
+-   `Schedule.First` is the first system to run every frame
+-   `Schedule.PreUpdate` runs every frame before the update systems
+-   `Schedule.Update` runs every frame
+-   `Schedule.PostUpdate` runs every frame after the update systems
+-   `Schedule.Last` is the last schedule to run every frame and is meant for cleanup tasks
 
 ### Resource
 
@@ -147,12 +147,12 @@ function mySystem() {
 
 The commands are used to interact with the world from within a system.
 
-- `Commands.spawn` creates a new entity with the specified components
-- `Commands.despawn` removes an entity and all its children
-- `Commands.addComponents` adds components to an existing entity
-- `Commands.insertResource` inserts a resource into the world
-- `Commands.getEntityById` gets an entity by its ID (numeric or string)
-- `Commands.components` gets all components of an entity
+-   `Commands.spawn` creates a new entity with the specified components
+-   `Commands.despawn` removes an entity and all its children
+-   `Commands.addComponents` adds components to an existing entity
+-   `Commands.insertResource` inserts a resource into the world
+-   `Commands.getEntityById` gets an entity by its ID (numeric or string)
+-   `Commands.components` gets all components of an entity
 
 ## Basic Example
 
@@ -196,8 +196,7 @@ class Counter {
 }
 
 // this component is used to mark the button for the counter
-class CounterMarker {
-}
+class CounterMarker {}
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
