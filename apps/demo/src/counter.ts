@@ -23,7 +23,7 @@ class CounterMarker {}
 // this system is used to spawn the UI elements initially
 function spawnUi() {
     Commands.spawn(
-        new UiNode(),
+        new UiNode("div"),
         new UiStyle()
             .set("backgroundColor", "#f5f5f540")
             .set("border", "solid 1px #202020")
@@ -35,22 +35,19 @@ function spawnUi() {
             .set("alignItems", "center")
             .set("gap", "0.5rem"),
     ).withChildren((parent) => {
-        parent.spawn(new UiText("Counter example"), new UiStyle().set("fontSize", "1.5rem").set("display", "block"))
-        parent.spawn(
-            new UiText("This is a simple counter example using the ECS.ts library."),
-            new UiStyle().set("display", "block"),
-        )
+        parent.spawn(new UiNode("h1"), new UiText("Counter example"), new UiStyle().set("fontSize", "1.5rem"))
+        parent.spawn(new UiNode("p"), new UiText("This is a simple counter example using the ECS.ts library."))
         parent.spawn(
             new UiAnchor("https://github.com/tsukinoko-kun/ecs.ts"),
             new UiText("ECS.ts on GitHub"),
             new UiStyle().set("display", "block"),
         )
         parent.spawn(
-            new CounterMarker(),
             new UiButton(),
             new UiText("Click me!"),
             new UiInteraction(),
             new UiStyle().set("maxWidth", "16rem").set("padding", "0.5rem 1rem").set("border", "solid 1px #202020"),
+            new CounterMarker(),
         )
     })
 }

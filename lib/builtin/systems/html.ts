@@ -1,7 +1,7 @@
 import { res } from "../../resource"
 import { HtmlRoot } from "../resources"
 import { query } from "../../query"
-import { UiAnchor, UiButton, UiInteraction, UiStyle, UiText } from "../components"
+import { UiAnchor, UiButton, UiInteraction, UiNode, UiStyle, UiText } from "../components"
 import { Entity } from "../../entity"
 import { inWorld, useWorld } from "../../world"
 import { Commands } from "../../commands"
@@ -70,32 +70,40 @@ export function renderHtmlRoot(): void {
     let el = document.createElement("div") as HTMLElement
 
     function render(e: Entity, el: HTMLElement): void {
-        let entityEl = document.createElement("div") as HTMLElement
-
-        function changeTag(name: string) {
-            const innerHtml = entityEl.innerHTML
-            const css = entityEl.style.cssText
-            entityEl = document.createElement(name)
-            entityEl.innerHTML = innerHtml
-            if (css) {
-                entityEl.style.cssText = css
-            }
-        }
+        const attr = new Map<string, string>()
+        const textContent = new Array<string>()
+        let tagName = ""
 
         for (const c of Commands.components(e)) {
-            if (c instanceof UiText) {
-                entityEl.innerText += c.value
+            if (c instanceof UiNode) {
+                tagName = c.type
+            } else if (c instanceof UiText) {
+                textContent.push(c.value)
             } else if (c instanceof UiStyle) {
-                entityEl.style.cssText = c.css
+                attr.set("style", c.css)
             } else if (c instanceof UiButton) {
-                changeTag("button")
+                tagName = "button"
             } else if (c instanceof UiAnchor) {
-                changeTag("a")
-                ;(entityEl as HTMLAnchorElement).href = c.href
-                ;(entityEl as HTMLAnchorElement).target = c.target
+                tagName = "a"
+                attr.set("href", c.href)
+                attr.set("target", c.target)
             }
         }
 
+        const entityEl = document.createElement(tagName || "div") as HTMLElement
+        entityEl.textContent = textContent.join(" ")
+        for (const [k, v] of attr) {
+            switch (k) {
+                case "style":
+                    entityEl.style.cssText = v
+                    break
+                case "class":
+                    entityEl.className = v
+                    break
+                default:
+                    entityEl.setAttribute(k, v)
+            }
+        }
         entityEl.dataset.entity = e.id.toString()
 
         el.appendChild(entityEl)
