@@ -28,7 +28,7 @@ The world is the main container for all entities, components, resources, and sys
 
 Inside a system you can access the world through the `useWorld` function.
 But you should only use it if you really need to.  
-Use the `Commands`, `query` and `res` to interact with the world.
+Use `Commands`, `query` and `res` to interact with the world.
 
 ### Entity
 
@@ -93,6 +93,8 @@ When adding a system to the world, you can specify on which schedule it should r
 A resource is a piece of data that is shared across all systems.
 It is also persistent across the entire application lifetime.
 
+Write your resources as classes (not object notation {}), this is important for the ECS to work correctly.
+
 Accessing a resource is done through the `res` function.  
 This function errors if the resource is not found.
 
@@ -155,6 +157,10 @@ The commands are used to interact with the world from within a system.
 -   `Commands.components` gets all components of an entity
 
 ## Basic Example
+
+Live at: https://tsukinoko-kun.github.io/ecs.ts/
+
+Full source at: https://github.com/tsukinoko-kun/ecs.ts/tree/main/apps/demo
 
 ```ts
 // index.ts
