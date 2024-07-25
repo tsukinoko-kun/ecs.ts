@@ -10,6 +10,7 @@ export class App {
     private readonly world = new World()
 
     public constructor() {
+        this.insertResource(new Time())
         Debug.worlds.push(this.world)
     }
 
@@ -17,6 +18,11 @@ export class App {
         inWorld(this.world, () => {
             plugin(this)
         })
+        return this
+    }
+
+    public insertResource(resource: Object): this {
+        this.world.insertResource(resource)
         return this
     }
 
@@ -38,11 +44,9 @@ export class App {
             setCurrentWorld(this.world)
 
             {
-                const time = this.world.getResourceSafe(Time)
-                if (time) {
-                    time.delta = elapsed - time.elapsed
-                    time.elapsed = elapsed
-                }
+                const time = this.world.getResource(Time)
+                time.delta = elapsed - time.elapsed
+                time.elapsed = elapsed
             }
 
             await Promise.all(this.world.getSystemsBySchedule(Schedule.First).map((system) => system()))
