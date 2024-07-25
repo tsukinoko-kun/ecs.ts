@@ -1,0 +1,14 @@
+{
+    "name": "ecs-devtools",
+    "version": "1.0.0",
+    "description": "dev tools for the ECS.ts library",
+    "scripts": {
+        "build": "zip -9 -v -r ./ecs-devtools.zip ./*.png ./*.js ./*.html ./manifest.json"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "chrome-types": "^0.1.294"
+    }
+}

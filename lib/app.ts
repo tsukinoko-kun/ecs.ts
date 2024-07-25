@@ -3,10 +3,15 @@ import { inWorld, setCurrentWorld, World } from "./world"
 import type { System } from "./system"
 import { Schedule } from "./schedule"
 import { Time } from "./builtin"
+import { Debug } from "./debug"
 
 export class App {
     private readonly plugins = new Array<Plugin>()
     private readonly world = new World()
+
+    public constructor() {
+        Debug.worlds.push(this.world)
+    }
 
     public addPlugin(plugin: Plugin): this {
         inWorld(this.world, () => {

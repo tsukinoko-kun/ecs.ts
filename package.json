@@ -13,7 +13,8 @@
     },
     "scripts": {
         "demo:dev": "pnpm -r --filter=\"demo\" run dev",
-        "demo:build": "pnpm -r --filter=\"demo\" run build"
+        "demo:build": "pnpm -r --filter=\"demo\" run build",
+        "extension:build": "pnpm -r --filter=\"extension\" run build"
     },
     "keywords": [],
     "author": "Frank Mayer",

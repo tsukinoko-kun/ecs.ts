@@ -1,0 +1,10 @@
+{
+    "manifest_version": 3,
+    "name": "ECS.ts",
+    "description": "dev tools for the ECS.ts library",
+    "version": "1.0",
+    "action": {
+        "default_icon": "ecs_128.png"
+    },
+    "devtools_page": "devtools.html"
+}

@@ -44,6 +44,12 @@ importers:
         specifier: ^20.14.11
         version: 20.14.12
 
+  apps/extension:
+    devDependencies:
+      chrome-types:
+        specifier: ^0.1.294
+        version: 0.1.294
+
 packages:
 
   '@esbuild/aix-ppc64@0.21.5':
@@ -269,6 +275,9 @@ packages:
 
   '@types/node@20.14.12':
     resolution: {integrity: sha512-r7wNXakLeSsGT0H1AU863vS2wa5wBOK4bWMjZz2wj+8nBx+m5PeIn0k8AloSLpRuiwdRQZwarZqHE4FNArPuJQ==}
+
+  chrome-types@0.1.294:
+    resolution: {integrity: sha512-oug/cAk1XJnDzVI9h72ffbmrDdk+847wju3rbZzIm0DA11p62tz5VIsCwmPzyDv9zNNk5vl/jQF4g0mLcgrL1Q==}
 
   esbuild@0.21.5:
     resolution: {integrity: sha512-mg3OPMV4hXywwpoDxu3Qda5xCKQi+vCTZq8S9J/EpkhB2HzKXq4SNFZE3+NK93JYxc8VMSep+lOUSC/RVKaBqw==}
@@ -552,6 +561,8 @@ snapshots:
   '@types/node@20.14.12':
     dependencies:
       undici-types: 5.26.5
+
+  chrome-types@0.1.294: {}
 
   esbuild@0.21.5:
     optionalDependencies:
