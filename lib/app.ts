@@ -23,15 +23,9 @@ export class App {
     public async run(): Promise<void> {
         setCurrentWorld(this.world)
 
-        for (const system of this.world.getSystemsBySchedule(Schedule.PreStartup)) {
-            await system()
-        }
-        for (const system of this.world.getSystemsBySchedule(Schedule.Startup)) {
-            await system()
-        }
-        for (const system of this.world.getSystemsBySchedule(Schedule.PostStartup)) {
-            await system()
-        }
+        await Promise.all(this.world.getSystemsBySchedule(Schedule.PreStartup).map((system) => system()))
+        await Promise.all(this.world.getSystemsBySchedule(Schedule.Startup).map((system) => system()))
+        await Promise.all(this.world.getSystemsBySchedule(Schedule.PostStartup).map((system) => system()))
 
         setCurrentWorld(null)
 
@@ -46,23 +40,13 @@ export class App {
                 }
             }
 
-            for (const system of this.world.getSystemsBySchedule(Schedule.First)) {
-                await system()
-            }
+            await Promise.all(this.world.getSystemsBySchedule(Schedule.First).map((system) => system()))
 
-            for (const system of this.world.getSystemsBySchedule(Schedule.PreUpdate)) {
-                await system()
-            }
-            for (const system of this.world.getSystemsBySchedule(Schedule.Update)) {
-                await system()
-            }
-            for (const system of this.world.getSystemsBySchedule(Schedule.PostUpdate)) {
-                await system()
-            }
+            await Promise.all(this.world.getSystemsBySchedule(Schedule.PreUpdate).map((system) => system()))
+            await Promise.all(this.world.getSystemsBySchedule(Schedule.Update).map((system) => system()))
+            await Promise.all(this.world.getSystemsBySchedule(Schedule.PostUpdate).map((system) => system()))
 
-            for (const system of this.world.getSystemsBySchedule(Schedule.Last)) {
-                await system()
-            }
+            await Promise.all(this.world.getSystemsBySchedule(Schedule.Last).map((system) => system()))
 
             setCurrentWorld(null)
             requestAnimationFrame(update)
