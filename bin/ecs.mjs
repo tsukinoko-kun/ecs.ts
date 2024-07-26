@@ -1,8 +1,9 @@
-import { relative, resolve } from "node:path"
-import { existsSync } from "node:fs"
-import { build as viteBuild, createServer as viteDev, preview as vitePreview } from "vite"
-import { readdir, writeFile } from "node:fs/promises"
+import { join, relative, resolve } from "node:path"
+import { existsSync, readFileSync } from "node:fs"
+import { build as viteBuild, createServer as viteDev } from "vite"
+import { lstat, readdir, writeFile } from "node:fs/promises"
 import { chromium } from "playwright"
+import express from "express"
 
 const __dirname = process.cwd()
 
@@ -48,31 +49,65 @@ async function build() {
         }
     }
 
-    const server = await vitePreview(viteConfig)
+    const server = await new Promise((res) => {
+        const app = express()
+        app.use(async (req, res) => {
+            if (req.url.startsWith(viteConfig.base)) {
+                req.url = req.url.slice(viteConfig.base.length)
+            }
+            if (!req.url.startsWith("/")) {
+                req.url = "/" + req.url
+            }
+            let p = join(viteConfig.build.outDir, req.url)
+            if (!existsSync(p)) {
+                res.status(404).send("Not found")
+                return
+            }
+            const stat = await lstat(p)
+            if (stat.isDirectory()) {
+                p = join(p, "index.html")
+                if (!existsSync(p)) {
+                    res.status(404).send("Not found")
+                    return
+                }
+            }
+            const f = readFileSync(p, "utf-8")
+            if (req.url.endsWith(".html")) {
+                res.setHeader("Content-Type", "text/html")
+            } else if (req.url.endsWith(".js")) {
+                res.setHeader("Content-Type", "text/javascript")
+            } else if (req.url.endsWith(".css")) {
+                res.setHeader("Content-Type", "text/css")
+            }
+            res.status(200)
+            res.send(f)
+        })
+        const server = app.listen(0, () => {
+            res(server)
+        })
+    })
 
-    await delay(200)
+    const adressInfo = server.address()
+    const adr = `http://localhost:${adressInfo.port}${viteConfig.base}`
 
-    const browser = await chromium.launch({ headless: true })
+    const browser = await chromium.launch({ headless: false })
     const page = await browser.newPage({
         acceptDownloads: false,
-        baseURL: server.resolvedUrls.local[0],
         ignoreHTTPSErrors: true,
         bypassCSP: true,
     })
 
-    const writeFilePromises = []
-
-    for (const file of htmlFiles) {
-        await page.goto(file)
-        await page.waitForTimeout(1000)
+    for (let file of htmlFiles) {
+        console.log("Rendering", file)
+        await page.goto(adr + file)
+        await page.waitForLoadState("networkidle")
+        await page.waitForTimeout(500)
         const html = await page.content()
-        writeFilePromises.push(writeFile(resolve(viteConfig.build.outDir, file), html))
+        await writeFile(resolve(viteConfig.build.outDir, file), html)
     }
 
     await browser.close()
     await server.close()
-
-    await Promise.all(writeFilePromises)
 }
 
 async function dev() {
@@ -98,7 +133,7 @@ async function getViteConfig() {
     if (existsSync(viteConfigPath)) {
         const config = await import(viteConfigPath)
 
-        config.default.base ??= def.base
+        config.default.base ||= def.base
         config.default.build ??= {}
         config.default.build.outDir ??= def.build.outDir
 
@@ -107,7 +142,5 @@ async function getViteConfig() {
         return def
     }
 }
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 await main(process.argv.slice(2))

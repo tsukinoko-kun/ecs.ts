@@ -11,7 +11,7 @@ app
     .addPlugin(HtmlPlugin("#app"))
     // the RouterPlugin is for working with the browser's location (URL)
     // use RouterPlugin for using it without a base path and RouterPlugin.withBasePath for using it with a base path
-    .addPlugin(RouterPlugin.withBasePath("/ecs.ts/"))
+    .addPlugin(RouterPlugin.withSettings("/ecs.ts/", "trim", true))
     // user plugins
     .addPlugin(CounterPlugin)
     .addPlugin(MeepPlugin)
