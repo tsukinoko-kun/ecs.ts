@@ -1,16 +1,21 @@
 import {
     type App,
     Commands,
+    Entity,
+    inState,
+    OnEnter,
+    OnExit,
     query,
     res,
-    Schedule,
     UiAnchor,
     UiButton,
     UiInteraction,
     UiNode,
     UiStyle,
     UiText,
+    Update,
 } from "@tsukinoko-kun/ecs.ts"
+import { Location } from "../../../lib/builtin/state"
 
 // this resource is used to store the counter value
 class Counter {
@@ -18,11 +23,14 @@ class Counter {
 }
 
 // this component is used to mark the button for the counter
-class CounterMarker {}
+class CounterButtonMarker {}
+
+class CounterPageMarker {}
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
     Commands.spawn(
+        new CounterPageMarker(),
         new UiNode("div"),
         new UiStyle()
             .set("backgroundColor", "#f5f5f540")
@@ -42,19 +50,20 @@ function spawnUi() {
             new UiText("ECS.ts on GitHub"),
             new UiStyle().set("display", "block"),
         )
+        parent.spawn(new UiAnchor("./meep"), new UiText("Meep"))
         parent.spawn(
             new UiButton(),
             new UiText("Click me!"),
             new UiInteraction(),
             new UiStyle().set("maxWidth", "16rem").set("padding", "0.5rem 1rem").set("border", "solid 1px #202020"),
-            new CounterMarker(),
+            new CounterButtonMarker(),
         )
     })
 }
 
 // this system is used to increment the counter value on button click
 function incrementCounter() {
-    for (const [btn] of query([UiInteraction], query.and(CounterMarker))) {
+    for (const [btn] of query([UiInteraction], query.and(CounterButtonMarker))) {
         if (btn.clicked) {
             const counter = res(Counter)
             counter.value++
@@ -65,7 +74,7 @@ function incrementCounter() {
 // this system is used to update the button text based on the current counter value
 function updateButtonText() {
     const counter = res(Counter)
-    for (const [text] of query([UiText], query.and(CounterMarker))) {
+    for (const [text] of query([UiText], query.and(CounterButtonMarker))) {
         if (counter.value === 0) {
             text.value = "Click to start the counter!"
         } else {
@@ -74,10 +83,22 @@ function updateButtonText() {
     }
 }
 
+function despawnUi() {
+    for (const [entity] of query.root([Entity], query.and(CounterPageMarker))) {
+        Commands.despawn(entity)
+    }
+}
+
 // this plugin bundles everything that is needed for this counter example to work
-export function counterPlugin(app: App) {
+export function CounterPlugin(app: App) {
     Commands.insertResource(new Counter())
-    app.addSystem(Schedule.Startup, spawnUi)
-        .addSystem(Schedule.Update, incrementCounter)
-        .addSystem(Schedule.Update, updateButtonText)
+
+    app
+        // this system should run when the location changes to "/"
+        .addSystem(OnEnter(Location.fromPath("/")), spawnUi)
+        // this systems should only run if the current location is "/"
+        .addSystem(Update, incrementCounter.runIf(inState(Location.fromPath("/"))))
+        .addSystem(Update, updateButtonText.runIf(inState(Location.fromPath("/"))))
+        // this system should run when the location changes from "/" to something else
+        .addSystem(OnExit(Location.fromPath("/")), despawnUi)
 }

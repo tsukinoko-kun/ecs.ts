@@ -12,6 +12,7 @@
         "ecs": "bin/ecs.mjs"
     },
     "scripts": {
+        "format": "prettier --write .",
         "demo:dev": "pnpm -r --filter=\"demo\" run dev",
         "demo:build": "pnpm -r --filter=\"demo\" run build",
         "extension:build": "pnpm -r --filter=\"extension\" run build"

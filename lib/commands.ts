@@ -1,6 +1,7 @@
 import type { Component } from "./component"
 import { useWorld } from "./world"
 import type { Entity } from "./entity"
+import { identify } from "./identify"
 
 export const Commands = {
     spawn(...components: Component[]): Entity {
@@ -26,5 +27,9 @@ export const Commands = {
     components(entity: Entity): IterableIterator<Component> {
         const world = useWorld()
         return world.getEntityComponents(entity).values()
+    },
+    component<T extends Component>(entity: Entity, type: { new (...args: any[]): T }): T | undefined {
+        const world = useWorld()
+        return world.getComponents().get(entity)?.get(identify(type)) as T | undefined
     },
 }

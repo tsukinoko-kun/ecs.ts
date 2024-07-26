@@ -174,8 +174,9 @@ Full source at: https://github.com/tsukinoko-kun/ecs.ts/tree/main/apps/demo
 
 ```ts
 // index.ts
-import { App, DefaultPlugin, HtmlPlugin } from "@tsukinoko-kun/ecs.ts"
-import { counterPlugin } from "./counter"
+import { App, DefaultPlugin, HtmlPlugin, RouterPlugin } from "@tsukinoko-kun/ecs.ts"
+import { CounterPlugin } from "./counter"
+import { MeepPlugin } from "./meep"
 
 const app = new App()
 
@@ -184,8 +185,12 @@ app
     .addPlugin(DefaultPlugin)
     // the HtmlPlugin is for rendering the UI to the DOM
     .addPlugin(HtmlPlugin("#app"))
-    // the counterPlugin is our custom plugin
-    .addPlugin(counterPlugin)
+    // the RouterPlugin is for working with the browser's location (URL)
+    // use RouterPlugin for using it without a base path and RouterPlugin.withBasePath for using it with a base path
+    .addPlugin(RouterPlugin.withBasePath("/ecs.ts/"))
+    // user plugins
+    .addPlugin(CounterPlugin)
+    .addPlugin(MeepPlugin)
 
 app.run()
 ```
@@ -195,16 +200,21 @@ app.run()
 import {
     type App,
     Commands,
+    Entity,
+    inState,
+    OnEnter,
+    OnExit,
     query,
     res,
-    Schedule,
     UiAnchor,
     UiButton,
     UiInteraction,
     UiNode,
     UiStyle,
     UiText,
+    Update,
 } from "@tsukinoko-kun/ecs.ts"
+import { Location } from "../../../lib/builtin/state"
 
 // this resource is used to store the counter value
 class Counter {
@@ -212,12 +222,15 @@ class Counter {
 }
 
 // this component is used to mark the button for the counter
-class CounterMarker {}
+class CounterButtonMarker {}
+
+class CounterPageMarker {}
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
     Commands.spawn(
-        new UiNode(),
+        new CounterPageMarker(),
+        new UiNode("div"),
         new UiStyle()
             .set("backgroundColor", "#f5f5f540")
             .set("border", "solid 1px #202020")
@@ -229,29 +242,27 @@ function spawnUi() {
             .set("alignItems", "center")
             .set("gap", "0.5rem"),
     ).withChildren((parent) => {
-        parent.spawn(new UiText("Counter example"), new UiStyle().set("fontSize", "1.5rem").set("display", "block"))
-        parent.spawn(
-            new UiText("This is a simple counter example using the ECS.ts library."),
-            new UiStyle().set("display", "block"),
-        )
+        parent.spawn(new UiNode("h1"), new UiText("Counter example"), new UiStyle().set("fontSize", "1.5rem"))
+        parent.spawn(new UiNode("p"), new UiText("This is a simple counter example using the ECS.ts library."))
         parent.spawn(
             new UiAnchor("https://github.com/tsukinoko-kun/ecs.ts"),
             new UiText("ECS.ts on GitHub"),
             new UiStyle().set("display", "block"),
         )
+        parent.spawn(new UiAnchor("./meep"), new UiText("Meep"))
         parent.spawn(
-            new CounterMarker(),
             new UiButton(),
             new UiText("Click me!"),
             new UiInteraction(),
             new UiStyle().set("maxWidth", "16rem").set("padding", "0.5rem 1rem").set("border", "solid 1px #202020"),
+            new CounterButtonMarker(),
         )
     })
 }
 
 // this system is used to increment the counter value on button click
 function incrementCounter() {
-    for (const [btn] of query([UiInteraction], query.and(CounterMarker))) {
+    for (const [btn] of query([UiInteraction], query.and(CounterButtonMarker))) {
         if (btn.clicked) {
             const counter = res(Counter)
             counter.value++
@@ -262,7 +273,7 @@ function incrementCounter() {
 // this system is used to update the button text based on the current counter value
 function updateButtonText() {
     const counter = res(Counter)
-    for (const [text] of query([UiText], query.and(CounterMarker))) {
+    for (const [text] of query([UiText], query.and(CounterButtonMarker))) {
         if (counter.value === 0) {
             text.value = "Click to start the counter!"
         } else {
@@ -271,11 +282,50 @@ function updateButtonText() {
     }
 }
 
+function despawnUi() {
+    for (const [entity] of query.root([Entity], query.and(CounterPageMarker))) {
+        Commands.despawn(entity)
+    }
+}
+
 // this plugin bundles everything that is needed for this counter example to work
-export function counterPlugin(app: App) {
+export function CounterPlugin(app: App) {
     Commands.insertResource(new Counter())
-    app.addSystem(Schedule.Startup, spawnUi)
-        .addSystem(Schedule.Update, incrementCounter)
-        .addSystem(Schedule.Update, updateButtonText)
+
+    app
+        // this system should run when the location changes to "/"
+        .addSystem(OnEnter(Location.fromPath("/")), spawnUi)
+        // this systems should only run if the current location is "/"
+        .addSystem(Update, incrementCounter.runIf(inState(Location.fromPath("/"))))
+        .addSystem(Update, updateButtonText.runIf(inState(Location.fromPath("/"))))
+        // this system should run when the location changes from "/" to something else
+        .addSystem(OnExit(Location.fromPath("/")), despawnUi)
+}
+```
+
+```ts
+// meep.ts
+import { type App, Commands, Entity, OnEnter, OnExit, query, UiNode, UiText } from "@tsukinoko-kun/ecs.ts"
+import { Location } from "../../../lib/builtin/state"
+
+class MeepPageMarker {}
+
+// this system is used to spawn the UI elements initially
+function spawnUi() {
+    Commands.spawn(new MeepPageMarker(), new UiNode("h1"), new UiText("Meep?"))
+}
+
+function despawnUi() {
+    for (const [entity] of query.root([Entity], query.and(MeepPageMarker))) {
+        Commands.despawn(entity)
+    }
+}
+
+export function MeepPlugin(app: App) {
+    app
+        // this system should run when the location changes to "/meep"
+        .addSystem(OnEnter(Location.fromPath("/meep")), spawnUi)
+        // this system should run when the location changes from "/" to something else
+        .addSystem(OnExit(Location.fromPath("/meep")), despawnUi)
 }
 ```

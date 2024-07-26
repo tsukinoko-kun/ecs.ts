@@ -13,11 +13,7 @@ export function htmlInteraction(): void {
     ;(root.element as HTMLElement).addEventListener("mousedown", (ev) => {
         inWorld(world, () => {
             for (const e of elements(ev)) {
-                for (const c of Commands.components(e)) {
-                    if (c instanceof UiInteraction) {
-                        c.triggerDown()
-                    }
-                }
+                Commands.component(e, UiInteraction)?.triggerDown()
             }
         })
         ;(root.element as HTMLElement).addEventListener("mouseup", (ev) => {
@@ -30,11 +26,7 @@ export function htmlInteraction(): void {
         ;(root.element as HTMLElement).addEventListener("click", (ev) => {
             inWorld(world, () => {
                 for (const e of elements(ev)) {
-                    for (const c of Commands.components(e)) {
-                        if (c instanceof UiInteraction) {
-                            c.triggerClick()
-                        }
-                    }
+                    Commands.component(e, UiInteraction)?.triggerClick()
                 }
             })
         })
@@ -105,6 +97,9 @@ export function renderHtmlRoot(): void {
             }
         }
         entityEl.dataset.entity = e.id.toString()
+        entityEl.dataset.components = Array.from(Commands.components(e))
+            .map((c) => c.constructor.name)
+            .join(" ")
 
         el.appendChild(entityEl)
 
@@ -117,10 +112,29 @@ export function renderHtmlRoot(): void {
         render(e, el)
     }
 
-    diffRender(root.element, el)
+    diffRender(root.element, el, false)
 }
 
-function diffRender(old: Element, next: HTMLElement) {
+function diffRender(old: Element, next: HTMLElement, deleteAttributes = true): void {
+    // check attributes
+    const oldAttrs = old.attributes
+    const nextAttrs = next.attributes
+    for (let i = 0; i < nextAttrs.length; i++) {
+        const nextAttr = nextAttrs[i]!
+        const oldAttr = oldAttrs.getNamedItem(nextAttr.name)
+        if (!oldAttr || oldAttr.value !== nextAttr.value) {
+            old.setAttribute(nextAttr.name, nextAttr.value)
+        }
+    }
+    if (deleteAttributes) {
+        for (let i = 0; i < oldAttrs.length; i++) {
+            const oldAttr = oldAttrs[i]!
+            if (nextAttrs.getNamedItem(oldAttr.name) === null) {
+                old.removeAttribute(oldAttr.name)
+            }
+        }
+    }
+
     if (old.childNodes.length !== next.childNodes.length) {
         old.innerHTML = next.innerHTML
         return

@@ -1,9 +1,10 @@
 import type { Plugin } from "./plugin"
 import { inWorld, setCurrentWorld, World } from "./world"
 import type { System } from "./system"
-import { Schedule } from "./schedule"
+import { First, Last, PostStartup, PostUpdate, PreStartup, PreUpdate, type Schedule, Startup, Update } from "./schedule"
 import { Time } from "./builtin"
 import { Debug } from "./debug"
+import type { State } from "./state"
 
 export class App {
     private readonly plugins = new Array<Plugin>()
@@ -26,6 +27,11 @@ export class App {
         return this
     }
 
+    public insertState(stateValue: State): this {
+        this.world.insertState(stateValue)
+        return this
+    }
+
     public addSystem(schedule: Schedule, system: System): this {
         this.world.addSystem(schedule, system)
         return this
@@ -34,9 +40,19 @@ export class App {
     public async run(): Promise<void> {
         setCurrentWorld(this.world)
 
-        await Promise.all(this.world.getSystemsBySchedule(Schedule.PreStartup).map((system) => system()))
-        await Promise.all(this.world.getSystemsBySchedule(Schedule.Startup).map((system) => system()))
-        await Promise.all(this.world.getSystemsBySchedule(Schedule.PostStartup).map((system) => system()))
+        await Promise.all(this.world.getSystemsBySchedule(PreStartup).map((system) => system()))
+        await Promise.all(this.world.getSystemsBySchedule(Startup).map((system) => system()))
+
+        const transitions = this.world.applyNextState()
+        if (transitions.enter.length) {
+            for (const [schedule, systems] of this.world.getDynamicSystems()) {
+                if (schedule([], transitions.enter)) {
+                    await Promise.all(systems.map((system) => system()))
+                }
+            }
+        }
+
+        await Promise.all(this.world.getSystemsBySchedule(PostStartup).map((system) => system()))
 
         setCurrentWorld(null)
 
@@ -49,13 +65,22 @@ export class App {
                 time.elapsed = elapsed
             }
 
-            await Promise.all(this.world.getSystemsBySchedule(Schedule.First).map((system) => system()))
+            await Promise.all(this.world.getSystemsBySchedule(First).map((system) => system()))
 
-            await Promise.all(this.world.getSystemsBySchedule(Schedule.PreUpdate).map((system) => system()))
-            await Promise.all(this.world.getSystemsBySchedule(Schedule.Update).map((system) => system()))
-            await Promise.all(this.world.getSystemsBySchedule(Schedule.PostUpdate).map((system) => system()))
+            await Promise.all(this.world.getSystemsBySchedule(PreUpdate).map((system) => system()))
+            await Promise.all(this.world.getSystemsBySchedule(Update).map((system) => system()))
+            await Promise.all(this.world.getSystemsBySchedule(PostUpdate).map((system) => system()))
 
-            await Promise.all(this.world.getSystemsBySchedule(Schedule.Last).map((system) => system()))
+            await Promise.all(this.world.getSystemsBySchedule(Last).map((system) => system()))
+
+            const transitions = this.world.applyNextState()
+            if (transitions.exit.length || transitions.enter.length) {
+                for (const [schedule, systems] of this.world.getDynamicSystems()) {
+                    if (schedule(transitions.exit, transitions.enter)) {
+                        await Promise.all(systems.map((system) => system()))
+                    }
+                }
+            }
 
             setCurrentWorld(null)
             requestAnimationFrame(update)

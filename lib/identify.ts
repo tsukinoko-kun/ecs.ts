@@ -2,6 +2,10 @@ export type Ident = symbol
 
 const __identifier__ = Symbol("__identifier__")
 
+export function identDisplay(symbol: Ident): string {
+    return symbol.toString().replace(/^Symbol\((.*)\)$/, "$1")
+}
+
 export function identify<T extends Object>(o: T | (new (...arg: any[]) => T)): Ident {
     if (__identifier__ in o) {
         return o[__identifier__] as Ident

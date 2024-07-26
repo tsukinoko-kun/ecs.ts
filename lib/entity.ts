@@ -1,7 +1,8 @@
 import type { Component } from "./component"
 import { useWorld } from "./world"
+import type { Equals } from "./traits"
 
-export class Entity {
+export class Entity implements Equals {
     private static current = 0
     public readonly children = new Array<Entity>()
     public readonly id: number
@@ -17,6 +18,10 @@ export class Entity {
 
     public toString(): string {
         return `Entity(${this.id})`
+    }
+
+    public equals(other: Entity): boolean {
+        return this.id === other.id
     }
 }
 

@@ -1,8 +1,10 @@
 import { Entity } from "./entity"
 import { type Component } from "./component"
 import type { System } from "./system"
-import { Schedule } from "./schedule"
-import { type Ident, identify } from "./identify"
+import type { DynamicSchedule, Schedule, StaticSchedule } from "./schedule"
+import { type Ident, identDisplay, identify } from "./identify"
+import { eq } from "./traits"
+import type { State } from "./state"
 
 let currentWorld: World | null = null
 
@@ -33,15 +35,22 @@ export function inWorld(world: World, fn: (world: World) => void): void {
 export class World {
     private readonly entities = new Array<Entity>()
     private readonly components = new Map<Entity, Map<Ident, Component>>()
-    private readonly systems = new Map<Schedule, Array<System>>()
+    private readonly staticSystems = new Map<StaticSchedule, Array<System>>()
+    private readonly dynamicSystems = new Array<[DynamicSchedule, System[]]>()
     private readonly resources = new Map<Ident, Object>()
+    private readonly state = new Map<Ident, State>()
+    private _nextStates = new Map<Ident, State>()
 
-    public getSystems(): ReadonlyMap<Schedule, ReadonlyArray<System>> {
-        return this.systems
+    public getSystems(): ReadonlyMap<StaticSchedule, ReadonlyArray<System>> {
+        return this.staticSystems
     }
 
-    public getSystemsBySchedule(schedule: Schedule): ReadonlyArray<System> {
-        return this.systems.get(schedule) ?? []
+    public getSystemsBySchedule(schedule: StaticSchedule): ReadonlyArray<System> {
+        return this.staticSystems.get(schedule) ?? []
+    }
+
+    public getDynamicSystems(): ReadonlyArray<[DynamicSchedule, System[]]> {
+        return this.dynamicSystems
     }
 
     public getEntities(): ReadonlyArray<Entity> {
@@ -79,9 +88,21 @@ export class World {
     public getResource<T>(t: { new (...args: any[]): T }): T {
         const r = this.resources.get(identify(t))
         if (!r) {
-            throw new Error(`Resource ${t.name} does not exist`)
+            throw new Error(`Resource ${t.name} does not exist in the world`)
         }
         return r as T
+    }
+
+    public getState<T>(t: { new (...args: any[]): T }): T {
+        const s = this.state.get(identify(t))
+        if (!s) {
+            throw new Error(`State ${t.name} does not exist in the world`)
+        }
+        return s as T
+    }
+
+    public getStates(): IterableIterator<State> {
+        return this.state.values()
     }
 
     /** @internal */
@@ -152,9 +173,11 @@ export class World {
             this.components.delete(e)
         }
 
-        const index = this.entities.indexOf(e)
-        if (index >= 0) {
-            this.entities.splice(index, 1)
+        for (let i = 0; i < this.entities.length; i++) {
+            if (this.entities[i]!.id === e.id) {
+                this.entities.splice(i, 1)
+                break
+            }
         }
 
         if (!keepChildren) {
@@ -167,14 +190,52 @@ export class World {
         }
     }
 
-    public addSystem(schedule: Schedule, system: System): void {
-        if (!this.systems.has(schedule)) {
-            this.systems.set(schedule, [])
+    public addSystem(schedule: Schedule, ...system: System[]): void {
+        if (typeof schedule === "number" && Number.isInteger(schedule)) {
+            if (!this.staticSystems.has(schedule)) {
+                this.staticSystems.set(schedule, [])
+            }
+            this.staticSystems.get(schedule)!.push(...system)
+        } else if (typeof schedule === "function") {
+            this.dynamicSystems.push([schedule, system])
+        } else {
+            throw new Error(`Invalid schedule ${schedule}`)
         }
-        this.systems.get(schedule)!.push(system)
     }
 
     public insertResource<T extends Object>(r: T): void {
         this.resources.set(identify(r), r)
+    }
+
+    public insertState(stateValue: State): void {
+        this.state.set(identify(stateValue), stateValue)
+        this._nextStates.set(identify(stateValue), stateValue)
+    }
+
+    public nextState(stateValue: State): void {
+        const i = identify(stateValue)
+        if (this.state.has(i)) {
+            const old = this.state.get(i)!
+            if (!eq(old, stateValue)) {
+                this._nextStates.set(i, stateValue)
+            } else {
+                console.warn(`State ${identDisplay(i)} was set to the same value`)
+            }
+        } else {
+            throw new Error(`State ${identDisplay(i)} does not exist in the world`)
+        }
+    }
+
+    /** @internal */
+    public applyNextState(): { enter: ReadonlyArray<State>; exit: ReadonlyArray<State> } {
+        const enter = new Array<State>()
+        const exit = new Array<State>()
+        for (const [i, state] of this._nextStates) {
+            exit.push(this.state.get(i)!)
+            this.state.set(i, state)
+            enter.push(state)
+        }
+        this._nextStates.clear()
+        return { enter, exit }
     }
 }
