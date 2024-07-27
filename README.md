@@ -14,15 +14,15 @@ pnpm add @tsukinoko-kun/ecs.ts
 
 ## Build
 
-ECS.ts comes with a build script that is based on Vite and Playwright.  
+ECS.ts comes with a build script that is based on Vite and JSDOM.  
 You can of course use your own build system if you want.
 Just keep in mind that ECS.ts is written in TypeScript and is not shipping any JavaScript files.
 
+You can use a `vite.config.ts` file to configure the build process.  
+By default, ECS.ts expects a `src` folder with an `index.html` as entry point.
+
 ```json
 {
-    "dependencies": {
-        "@tsukinoko-kun/ecs.ts": "^1.0.0"
-    },
     "scripts": {
         "dev": "ecs dev",
         "build": "ecs build"
@@ -116,6 +116,72 @@ Register a resource with the world using the `insertResource` function.
 
 ```ts
 Commands.insertResource(new MyResource())
+```
+
+### State
+
+The state is a way to store the overall state of the application.  
+This is very similar to resources,
+but the state is used to specify which systems should run
+while the resources are used to store data used by the systems.
+
+You can only use classes (not object notation `{}`) as state which implement the `Eq` type
+(`Equals` or `Comparable` interface).  
+You can have multiple types of state at the same time.
+
+To create a state, use `app.insertState` and pass in the state value.
+
+```ts
+class MyState implements Equals {
+    public value = 0
+
+    public constructor(value: number) {
+        this.value = value
+    }
+    
+    public static default() {
+        return new MyState(0)
+    }
+    
+    public equals(other: MyState): boolean {
+        return this.value === other.value
+    }
+}
+
+export function MyPlugin(app: App) {
+    app.insertState(new MyState(0))
+}
+```
+
+To access the state, use the `state` function. The returned object is read-only.
+
+```ts
+function mySystem() {
+    const myState = state(MyState)
+    console.log(myState.value)
+}
+```
+
+The main use case for the state is to control which systems should run based on the current state value.
+You can use the state in the Schedule (for transitions), in the system itself (for conditional execution) or combine both.
+
+```ts
+export function MyPlugin(app: App) {
+    app
+        .addSystem(OnEnter(new MyState(1)), fooSystem)
+        .addSystem(Update, barSystem.runIf(inState(new MyState(1))))
+        .addSystem(OnExit(new MyState(1)), bazSystem)
+        .addSystem(OnTransition(new MyState(1), new MyState(2)), quxSystem)
+}
+```
+
+Use `nextState` to change the state.  
+The change is not immediate, it will only take effect after the current frame.
+
+```ts
+function mySystem() {
+    nextState(new MyState(1))
+}
 ```
 
 ### Query

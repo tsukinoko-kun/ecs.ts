@@ -3,6 +3,9 @@ import { type DeepReadonly, eq, type Eq } from "./traits"
 
 export type State = object & Eq
 
+/**
+ * Access a state object.
+ */
 export function state<T extends State>(type: { new (...args: any[]): T }): DeepReadonly<T> & State {
     const world = useWorld()
     return world.getState(type) as DeepReadonly<T> & State
