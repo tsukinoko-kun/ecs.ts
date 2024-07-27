@@ -138,11 +138,11 @@ class MyState implements Equals {
     public constructor(value: number) {
         this.value = value
     }
-    
+
     public static default() {
         return new MyState(0)
     }
-    
+
     public equals(other: MyState): boolean {
         return this.value === other.value
     }
@@ -167,8 +167,7 @@ You can use the state in the Schedule (for transitions), in the system itself (f
 
 ```ts
 export function MyPlugin(app: App) {
-    app
-        .addSystem(OnEnter(new MyState(1)), fooSystem)
+    app.addSystem(OnEnter(new MyState(1)), fooSystem)
         .addSystem(Update, barSystem.runIf(inState(new MyState(1))))
         .addSystem(OnExit(new MyState(1)), bazSystem)
         .addSystem(OnTransition(new MyState(1), new MyState(2)), quxSystem)

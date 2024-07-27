@@ -1,9 +1,9 @@
 import { join, relative, resolve } from "node:path"
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync } from "node:fs"
 import { build as viteBuild, createServer as viteDev } from "vite"
-import { lstat, readdir, writeFile } from "node:fs/promises"
-import { chromium } from "playwright"
-import express from "express"
+import { readdir, readFile, writeFile } from "node:fs/promises"
+import { JSDOM } from "jsdom"
+import { Script } from "node:vm"
 
 const __dirname = process.cwd()
 
@@ -32,9 +32,11 @@ async function main(args) {
 
 async function build() {
     const viteConfig = await getViteConfig()
+
+    // build
     await viteBuild(viteConfig)
 
-    // render all html files in vite build output
+    // find all html files
     const htmlFiles = []
     const dirs = [viteConfig.build.outDir]
     while (dirs.length > 0) {
@@ -49,65 +51,49 @@ async function build() {
         }
     }
 
-    const server = await new Promise((res) => {
-        const app = express()
-        app.use(async (req, res) => {
-            if (req.url.startsWith(viteConfig.base)) {
-                req.url = req.url.slice(viteConfig.base.length)
-            }
-            if (!req.url.startsWith("/")) {
-                req.url = "/" + req.url
-            }
-            let p = join(viteConfig.build.outDir, req.url)
-            if (!existsSync(p)) {
-                res.status(404).send("Not found")
-                return
-            }
-            const stat = await lstat(p)
-            if (stat.isDirectory()) {
-                p = join(p, "index.html")
-                if (!existsSync(p)) {
-                    res.status(404).send("Not found")
-                    return
-                }
-            }
-            const f = readFileSync(p, "utf-8")
-            if (req.url.endsWith(".html")) {
-                res.setHeader("Content-Type", "text/html")
-            } else if (req.url.endsWith(".js")) {
-                res.setHeader("Content-Type", "text/javascript")
-            } else if (req.url.endsWith(".css")) {
-                res.setHeader("Content-Type", "text/css")
-            }
-            res.status(200)
-            res.send(f)
-        })
-        const server = app.listen(0, () => {
-            res(server)
-        })
-    })
+    const adr = `http://localhost${viteConfig.base}`
 
-    const adressInfo = server.address()
-    const adr = `http://localhost:${adressInfo.port}${viteConfig.base}`
-
-    const browser = await chromium.launch({ headless: false })
-    const page = await browser.newPage({
-        acceptDownloads: false,
-        ignoreHTTPSErrors: true,
-        bypassCSP: true,
-    })
-
+    // render html files
     for (let file of htmlFiles) {
         console.log("Rendering", file)
-        await page.goto(adr + file)
-        await page.waitForLoadState("networkidle")
-        await page.waitForTimeout(500)
-        const html = await page.content()
-        await writeFile(resolve(viteConfig.build.outDir, file), html)
-    }
+        const p = resolve(viteConfig.build.outDir, file)
+        const dom = new JSDOM(await readFile(p, "utf-8"), {
+            runScripts: "outside-only",
+            resources: undefined,
+            url: adr + file,
+            pretendToBeVisual: true,
+        })
+        // wait for html to be loaded
+        await new Promise((res) => {
+            dom.window.onload = res
+            if (dom.window.document.readyState === "complete") {
+                res()
+            }
+        })
+        // get all scripts
+        const scripts = Array.from(dom.window.document.querySelectorAll("script[src]"))
+        for (const script of scripts) {
+            const url = new URL(script.src, adr)
+            let filePath = url.pathname
+            if (filePath.startsWith(viteConfig.base)) {
+                filePath = filePath.slice(viteConfig.base.length)
+            }
+            const p = join(viteConfig.build.outDir, filePath)
+            if (!existsSync(p)) {
+                continue
+            }
+            const content = await readFile(p, "utf-8")
+            const s = new Script(content, { filename: url.pathname })
+            s.runInContext(dom.getInternalVMContext())
+        }
 
-    await browser.close()
-    await server.close()
+        await delay(500)
+
+        const html = dom.serialize()
+        console.log("Writing", file, html)
+        await writeFile(resolve(viteConfig.build.outDir, file), html)
+        dom.window.close()
+    }
 }
 
 async function dev() {
@@ -141,6 +127,10 @@ async function getViteConfig() {
     } else {
         return def
     }
+}
+
+function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 await main(process.argv.slice(2))
