@@ -1,3 +1,5 @@
+export * from "./basePath"
 export * from "./buttonInput"
 export * from "./htmlRoot"
+export * from "./htmlTitle"
 export * from "./time"

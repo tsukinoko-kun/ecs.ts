@@ -1,7 +1,23 @@
-import { type App, Commands, Entity, OnEnter, OnExit, query, UiNode, UiText } from "@tsukinoko-kun/ecs.ts"
-import { Location } from "../../../lib/builtin/state"
+import {
+    type App,
+    Commands,
+    Entity,
+    HtmlTitle,
+    Location,
+    OnEnter,
+    OnExit,
+    query,
+    res,
+    UiNode,
+    UiText,
+} from "@tsukinoko-kun/ecs.ts"
 
 class MeepPageMarker {}
+
+function setTitle() {
+    const t = res(HtmlTitle)
+    t.title = "Meep!"
+}
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
@@ -15,7 +31,7 @@ function despawnUi() {
 }
 
 export function MeepPlugin(app: App) {
-    app
+    app.addSystem(OnEnter(Location.fromPath("/meep")), setTitle)
         // this system should run when the location changes to "/meep"
         .addSystem(OnEnter(Location.fromPath("/meep")), spawnUi)
         // this system should run when the location changes from "/" to something else

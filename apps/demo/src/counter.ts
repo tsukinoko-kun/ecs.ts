@@ -2,7 +2,9 @@ import {
     type App,
     Commands,
     Entity,
+    HtmlTitle,
     inState,
+    Location,
     OnEnter,
     OnExit,
     query,
@@ -15,7 +17,6 @@ import {
     UiText,
     Update,
 } from "@tsukinoko-kun/ecs.ts"
-import { Location } from "../../../lib/builtin/state"
 
 // this resource is used to store the counter value
 class Counter {
@@ -26,6 +27,11 @@ class Counter {
 class CounterButtonMarker {}
 
 class CounterPageMarker {}
+
+function setTitle() {
+    const t = res(HtmlTitle)
+    t.title = "Counter example"
+}
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
@@ -91,9 +97,8 @@ function despawnUi() {
 
 // this plugin bundles everything that is needed for this counter example to work
 export function CounterPlugin(app: App) {
-    Commands.insertResource(new Counter())
-
-    app
+    app.insertResource(new Counter())
+        .addSystem(OnEnter(Location.fromPath("/")), setTitle)
         // this system should run when the location changes to "/"
         .addSystem(OnEnter(Location.fromPath("/")), spawnUi)
         // this systems should only run if the current location is "/"

@@ -266,7 +266,9 @@ import {
     type App,
     Commands,
     Entity,
+    HtmlTitle,
     inState,
+    Location,
     OnEnter,
     OnExit,
     query,
@@ -279,7 +281,6 @@ import {
     UiText,
     Update,
 } from "@tsukinoko-kun/ecs.ts"
-import { Location } from "../../../lib/builtin/state"
 
 // this resource is used to store the counter value
 class Counter {
@@ -290,6 +291,11 @@ class Counter {
 class CounterButtonMarker {}
 
 class CounterPageMarker {}
+
+function setTitle() {
+    const t = res(HtmlTitle)
+    t.title = "Counter example"
+}
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
@@ -355,9 +361,8 @@ function despawnUi() {
 
 // this plugin bundles everything that is needed for this counter example to work
 export function CounterPlugin(app: App) {
-    Commands.insertResource(new Counter())
-
-    app
+    app.insertResource(new Counter())
+        .addSystem(OnEnter(Location.fromPath("/")), setTitle)
         // this system should run when the location changes to "/"
         .addSystem(OnEnter(Location.fromPath("/")), spawnUi)
         // this systems should only run if the current location is "/"
@@ -370,10 +375,26 @@ export function CounterPlugin(app: App) {
 
 ```ts
 // meep.ts
-import { type App, Commands, Entity, OnEnter, OnExit, query, UiNode, UiText } from "@tsukinoko-kun/ecs.ts"
-import { Location } from "../../../lib/builtin/state"
+import {
+    type App,
+    Commands,
+    Entity,
+    HtmlTitle,
+    Location,
+    OnEnter,
+    OnExit,
+    query,
+    res,
+    UiNode,
+    UiText,
+} from "@tsukinoko-kun/ecs.ts"
 
 class MeepPageMarker {}
+
+function setTitle() {
+    const t = res(HtmlTitle)
+    t.title = "Meep!"
+}
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
@@ -387,7 +408,7 @@ function despawnUi() {
 }
 
 export function MeepPlugin(app: App) {
-    app
+    app.addSystem(OnEnter(Location.fromPath("/meep")), setTitle)
         // this system should run when the location changes to "/meep"
         .addSystem(OnEnter(Location.fromPath("/meep")), spawnUi)
         // this system should run when the location changes from "/" to something else

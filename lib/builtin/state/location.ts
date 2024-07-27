@@ -1,6 +1,6 @@
 import type { Equals } from "../../traits"
 import { res } from "../../resource"
-import { BasePath } from "../resources/basePath"
+import { BasePath } from "../resources"
 
 function trimBasePath(basePath: string, path: string): string {
     if (basePath === "/") {

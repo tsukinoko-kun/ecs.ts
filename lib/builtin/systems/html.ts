@@ -115,7 +115,17 @@ export function renderHtmlRoot(): void {
     diffRender(root.element, el, false)
 }
 
-function diffRender(old: Element, next: HTMLElement, deleteAttributes = true): void {
+function diffRender(old: Element, next: HTMLElement, rude = true): void {
+    if (old.outerHTML === next.outerHTML) {
+        return
+    }
+
+    // check tag name
+    if (rude && old.tagName !== next.tagName) {
+        old.replaceWith(next)
+        return
+    }
+
     // check attributes
     const oldAttrs = old.attributes
     const nextAttrs = next.attributes
@@ -126,7 +136,7 @@ function diffRender(old: Element, next: HTMLElement, deleteAttributes = true): v
             old.setAttribute(nextAttr.name, nextAttr.value)
         }
     }
-    if (deleteAttributes) {
+    if (rude) {
         for (let i = 0; i < oldAttrs.length; i++) {
             const oldAttr = oldAttrs[i]!
             if (nextAttrs.getNamedItem(oldAttr.name) === null) {
@@ -158,4 +168,9 @@ function diffRender(old: Element, next: HTMLElement, deleteAttributes = true): v
             }
         }
     }
+}
+
+export function clearHtmlRoot(): void {
+    const root = res(HtmlRoot)
+    root.element.innerHTML = ""
 }
