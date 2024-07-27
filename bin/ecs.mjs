@@ -1,7 +1,8 @@
-import { join, relative, resolve } from "node:path"
+import { dirname, join, relative } from "node:path"
+import { join as posixJoin } from "node:path/posix"
 import { existsSync } from "node:fs"
 import { build as viteBuild, createServer as viteDev } from "vite"
-import { readdir, readFile, writeFile } from "node:fs/promises"
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises"
 import { JSDOM } from "jsdom"
 import { Script } from "node:vm"
 
@@ -19,10 +20,10 @@ async function main(args) {
 
     switch (args[0]) {
         case "build":
-            await build()
+            await build(args.slice(1))
             break
         case "dev":
-            await dev()
+            await dev(args.slice(1))
             break
         default:
             console.error(`Unknown command: ${args[0]}`)
@@ -30,7 +31,8 @@ async function main(args) {
     }
 }
 
-async function build() {
+/** @param {string[]} args */
+async function build(args) {
     const viteConfig = await getViteConfig()
 
     // build
@@ -44,23 +46,27 @@ async function build() {
         const files = await readdir(dir, { withFileTypes: true })
         for (const file of files) {
             if (file.isDirectory()) {
-                dirs.push(resolve(dir, file.name))
+                dirs.push(join(dir, file.name))
             } else if (file.isFile() && file.name.endsWith(".html")) {
-                htmlFiles.push(relative(viteConfig.build.outDir, resolve(dir, file.name)))
+                htmlFiles.push(relative(viteConfig.build.outDir, join(dir, file.name)))
             }
         }
     }
 
     const adr = `http://localhost${viteConfig.base}`
 
-    // render html files
-    for (let file of htmlFiles) {
-        console.log("Rendering", file)
-        const p = resolve(viteConfig.build.outDir, file)
-        const dom = new JSDOM(await readFile(p, "utf-8"), {
+    const done = new Set(htmlFiles)
+
+    /**
+     * @param {string} pathname
+     * @param {string|undefined} html
+     */
+    async function render(pathname, html) {
+        console.log(`render(${pathname})`)
+        const dom = new JSDOM(html, {
             runScripts: "outside-only",
             resources: undefined,
-            url: adr + file,
+            url: adr + pathname,
             pretendToBeVisual: true,
         })
         // wait for html to be loaded
@@ -89,14 +95,48 @@ async function build() {
 
         await delay(500)
 
-        const html = dom.serialize()
-        console.log("Writing", file, html)
-        await writeFile(resolve(viteConfig.build.outDir, file), html)
-        dom.window.close()
+        const newHtml = dom.serialize()
+        await mkdir(dirname(join(viteConfig.build.outDir, pathname)), { recursive: true })
+        await writeFile(join(viteConfig.build.outDir, pathname), newHtml)
+
+        if (args.includes("--prerender-anchors")) {
+            const hrefs = Array.from(dom.window.document.querySelectorAll("a[href]")).map((a) => a.href)
+            const loc = dom.window.location.href
+            dom.window.close()
+            for (const href of hrefs) {
+                try {
+                    const now = new URL(loc)
+                    const targetUrl = new URL(href, loc)
+                    if (targetUrl.origin !== now.origin) {
+                        continue
+                    }
+                    let targetPath = targetUrl.pathname
+                    if (targetPath.startsWith(viteConfig.base)) {
+                        targetPath = targetPath.slice(viteConfig.base.length)
+                    }
+                    if (!targetPath.endsWith(".html")) {
+                        targetPath = posixJoin(targetPath, "index.html")
+                    }
+                    if (done.has(targetPath)) {
+                        continue
+                    }
+                    done.add(targetPath)
+                    await render(targetPath, newHtml)
+                } catch {}
+            }
+        } else {
+            dom.window.close()
+        }
+    }
+
+    // render html files
+    for (let file of htmlFiles) {
+        await render(file, await readFile(join(viteConfig.build.outDir, file), "utf8"))
     }
 }
 
-async function dev() {
+/** @param {string[]} args */
+async function dev(args) {
     const viteConfig = await getViteConfig()
     const server = await viteDev(viteConfig)
     await server.listen()
@@ -107,15 +147,15 @@ async function dev() {
 
 async function getViteConfig() {
     const def = {
-        root: resolve(__dirname, "./src"),
+        root: join(__dirname, "./src"),
         base: "/",
         build: {
-            outDir: resolve(__dirname, "./dist"),
+            outDir: join(__dirname, "./dist"),
             emptyOutDir: true,
         },
     }
 
-    const viteConfigPath = resolve(__dirname, "vite.config.js")
+    const viteConfigPath = join(__dirname, "vite.config.js")
     if (existsSync(viteConfigPath)) {
         const config = await import(viteConfigPath)
 
@@ -130,7 +170,7 @@ async function getViteConfig() {
 }
 
 function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms))
+    return new Promise((res) => setTimeout(res, ms))
 }
 
 await main(process.argv.slice(2))
