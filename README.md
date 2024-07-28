@@ -21,11 +21,13 @@ Just keep in mind that ECS.ts is written in TypeScript and is not shipping any J
 You can use a `vite.config.ts` file to configure the build process.  
 By default, ECS.ts expects a `src` folder with an `index.html` as entry point.
 
+If you use the Location state (RouterPlugin), all possible locations are prerendered automatically.
+
 ```json5
 {
     scripts: {
         dev: "ecs dev",
-        build: "ecs build", // use --prerender-anchors to prerender all internal anchor links (for HtmlPlugin)
+        build: "ecs build",
     },
 }
 ```

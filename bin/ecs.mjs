@@ -55,59 +55,75 @@ async function build(args) {
 
     const adr = `http://localhost${viteConfig.base}`
 
-    const done = new Set(htmlFiles)
+    const done = new Set(htmlFiles.map((f) => join(viteConfig.build.outDir, f)))
 
     /**
      * @param {string} pathname
+     * @param {string} file
      * @param {string|undefined} html
      */
-    async function render(pathname, html) {
-        console.log(`render(${pathname})`)
+    async function render(pathname, file, html) {
+        done.add(file)
+
+        if (!html) {
+            html = await readFile(file, "utf-8")
+        }
+        console.log(`render("${pathname}", "${file}")`)
+        const url = new URL(pathname, adr)
         const dom = new JSDOM(html, {
             runScripts: "outside-only",
             resources: undefined,
-            url: adr + pathname,
+            url: url.href,
             pretendToBeVisual: true,
         })
-        // wait for html to be loaded
-        await new Promise((res) => {
-            dom.window.onload = res
-            if (dom.window.document.readyState === "complete") {
-                res()
-            }
-        })
-        // get all scripts
-        const scripts = Array.from(dom.window.document.querySelectorAll("script[src]"))
-        for (const script of scripts) {
-            const url = new URL(script.src, adr)
-            let filePath = url.pathname
-            if (filePath.startsWith(viteConfig.base)) {
-                filePath = filePath.slice(viteConfig.base.length)
-            }
-            const p = join(viteConfig.build.outDir, filePath)
-            if (!existsSync(p)) {
-                continue
-            }
-            const content = await readFile(p, "utf-8")
-            const s = new Script(content, { filename: url.pathname })
-            s.runInContext(dom.getInternalVMContext())
-        }
 
-        await delay(500)
+        let open = true
+        try {
+            // wait for html to be loaded
+            await new Promise((res) => {
+                dom.window.onload = res
+                if (dom.window.document.readyState === "complete") {
+                    res()
+                }
+            })
+            // get all scripts
+            const scripts = Array.from(dom.window.document.querySelectorAll("script[src]"))
+            for (const script of scripts) {
+                const url = new URL(script.src, adr)
+                let filePath = url.pathname
+                if (filePath.startsWith(viteConfig.base)) {
+                    filePath = filePath.slice(viteConfig.base.length)
+                }
+                const p = join(viteConfig.build.outDir, filePath)
+                if (!existsSync(p)) {
+                    continue
+                }
+                const content = await readFile(p, "utf-8")
+                const s = new Script(content, { filename: url.pathname })
+                s.runInContext(dom.getInternalVMContext())
+            }
 
-        const newHtml = dom.serialize()
-        await mkdir(dirname(join(viteConfig.build.outDir, pathname)), { recursive: true })
-        await writeFile(join(viteConfig.build.outDir, pathname), newHtml)
+            await delay(500)
 
-        if (args.includes("--prerender-anchors")) {
-            const hrefs = Array.from(dom.window.document.querySelectorAll("a[href]")).map((a) => a.href)
-            const loc = dom.window.location.href
+            const newHtml = dom.serialize()
+            const dir = dirname(file)
+            await mkdir(dir, { recursive: true })
+            await writeFile(file, newHtml)
+
+            /** @type {Array<string>} */
+            const routerPaths = Array.from(dom.window.__ecs_debug__(true).location.pathCache.keys())
+
             dom.window.close()
-            for (const href of hrefs) {
+            open = false
+
+            if (routerPaths.length === 0) {
+                return
+            }
+
+            for (const href of routerPaths) {
                 try {
-                    const now = new URL(loc)
-                    const targetUrl = new URL(href, loc)
-                    if (targetUrl.origin !== now.origin) {
+                    const targetUrl = new URL(href, url)
+                    if (targetUrl.origin !== url.origin) {
                         continue
                     }
                     let targetPath = targetUrl.pathname
@@ -117,21 +133,36 @@ async function build(args) {
                     if (!targetPath.endsWith(".html")) {
                         targetPath = posixJoin(targetPath, "index.html")
                     }
-                    if (done.has(targetPath)) {
+                    const file = join(viteConfig.build.outDir, targetPath)
+                    if (done.has(file)) {
                         continue
                     }
-                    done.add(targetPath)
-                    await render(targetPath, newHtml)
+                    if (existsSync(file)) {
+                        continue
+                    }
+                    if (targetPath.endsWith("index.html")) {
+                        targetPath = targetPath.slice(0, -10)
+                    }
+                    await render(targetPath, file, newHtml)
                 } catch {}
             }
-        } else {
-            dom.window.close()
+        } finally {
+            if (open) {
+                dom.window.close()
+            }
         }
     }
 
     // render html files
-    for (let file of htmlFiles) {
-        await render(file, await readFile(join(viteConfig.build.outDir, file), "utf8"))
+    for (const file of htmlFiles) {
+        let p = file
+        if (p.endsWith("index.html")) {
+            p = p.slice(0, -10)
+        }
+        if (p === "") {
+            p = "/"
+        }
+        await render(p, join(viteConfig.build.outDir, file), undefined)
     }
 }
 

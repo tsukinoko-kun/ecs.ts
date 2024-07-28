@@ -5,7 +5,7 @@
     "source": "src/index.html",
     "scripts": {
         "dev": "ecs dev",
-        "build": "ecs build --prerender-anchors"
+        "build": "ecs build"
     },
     "dependencies": {
         "@tsukinoko-kun/ecs.ts": "workspace:*",

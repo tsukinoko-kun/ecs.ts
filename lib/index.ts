@@ -12,3 +12,6 @@ export * from "./traits"
 export * from "./world"
 
 export * from "./builtin"
+
+export * from "./debug"
+export * from "./err"
