@@ -6,6 +6,7 @@ on:
         paths:
             - ".github/workflows/demo.yaml"
             - "apps/demo/**"
+            - "bin/ecs.mjs"
             - "pnpm-lock.yaml"
             - "package.json"
             - "lib/**"
