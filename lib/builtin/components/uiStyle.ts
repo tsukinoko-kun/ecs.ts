@@ -1,8 +1,13 @@
 export class UiStyle {
     public readonly cssObject: CSSStyleDeclaration
 
-    constructor() {
+    public constructor(cssObject?: Partial<CSSStyleDeclaration>) {
         this.cssObject = document.createElement("div").style
+        if (cssObject) {
+            for (const key in cssObject) {
+                this.cssObject[key] = cssObject[key]!
+            }
+        }
     }
 
     public get css(): string {

@@ -13,10 +13,10 @@ import {
     UiButton,
     UiInteraction,
     UiNode,
-    UiStyle,
     UiText,
     Update,
 } from "@tsukinoko-kun/ecs.ts"
+import { UiClassList } from "../../../lib/builtin/components/uiClassList"
 
 // this resource is used to store the counter value
 class Counter {
@@ -38,30 +38,47 @@ function spawnUi() {
     Commands.spawn(
         new CounterPageMarker(),
         new UiNode("div"),
-        new UiStyle()
-            .set("backgroundColor", "#f5f5f540")
-            .set("border", "solid 1px #202020")
-            .set("padding", "0.5rem 1rem")
-            .set("maxWidth", "64rem")
-            .set("margin", "4rem auto")
-            .set("display", "flex")
-            .set("flexDirection", "column")
-            .set("alignItems", "center")
-            .set("gap", "0.5rem"),
+        new UiClassList(
+            "bg-gray-300",
+            "border",
+            "border-gray-800",
+            "rounded-md",
+            "px-4",
+            "py-2",
+            "max-w-96",
+            "mx-auto",
+            "my-16",
+            "flex",
+            "flex-col",
+            "items-center",
+            "gap-md",
+        ),
     ).withChildren((parent) => {
-        parent.spawn(new UiNode("h1"), new UiText("Counter example"), new UiStyle().set("fontSize", "1.5rem"))
+        parent.spawn(new UiNode("h1"), new UiText("Counter example"), new UiClassList("text-red-400", "text-4xl"))
         parent.spawn(new UiNode("p"), new UiText("This is a simple counter example using the ECS.ts library."))
         parent.spawn(
             new UiAnchor("https://github.com/tsukinoko-kun/ecs.ts"),
             new UiText("ECS.ts on GitHub"),
-            new UiStyle().set("display", "block"),
+            new UiClassList("block", "text-blue-500", "hover:text-blue-700", "underline"),
         )
-        parent.spawn(new UiAnchor("./meep"), new UiText("Meep"))
+        parent.spawn(
+            new UiAnchor("./meep"),
+            new UiText("Meep"),
+            new UiClassList("block", "text-blue-500", "hover:text-blue-700", "underline"),
+        )
         parent.spawn(
             new UiButton(),
             new UiText("Click me!"),
             new UiInteraction(),
-            new UiStyle().set("maxWidth", "16rem").set("padding", "0.5rem 1rem").set("border", "solid 1px #202020"),
+            new UiClassList(
+                "px-4",
+                "py-2",
+                "border",
+                "border-gray-800",
+                "rounded-md",
+                "bg-gray-400",
+                "hover:bg-gray-500",
+            ),
             new CounterButtonMarker(),
         )
     })

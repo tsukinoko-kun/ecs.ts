@@ -5,6 +5,7 @@ import { UiAnchor, UiButton, UiInteraction, UiNode, UiStyle, UiText } from "../c
 import { Entity } from "../../entity"
 import { inWorld, useWorld } from "../../world"
 import { Commands } from "../../commands"
+import { UiClassList } from "../components/uiClassList"
 
 export function htmlInteraction(): void {
     const root = res(HtmlRoot)
@@ -79,6 +80,10 @@ export function renderHtmlRoot(): void {
                 tagName = "a"
                 attr.set("href", c.href)
                 attr.set("target", c.target)
+            } else if (c instanceof UiClassList) {
+                const nowClassList = attr.get("class")?.split(" ") || []
+                nowClassList.push(...Array.from(c.toArray()))
+                attr.set("class", nowClassList.join(" "))
             }
         }
 

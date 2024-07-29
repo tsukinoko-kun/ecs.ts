@@ -11,6 +11,7 @@ import {
     UiNode,
     UiText,
 } from "@tsukinoko-kun/ecs.ts"
+import { UiClassList } from "../../../lib/builtin/components/uiClassList"
 
 class MeepPageMarker {}
 
@@ -21,7 +22,7 @@ function setTitle() {
 
 // this system is used to spawn the UI elements initially
 function spawnUi() {
-    Commands.spawn(new MeepPageMarker(), new UiNode("h1"), new UiText("Meep?"))
+    Commands.spawn(new MeepPageMarker(), new UiNode("h1"), new UiText("Meep?"), new UiClassList("text-4xl"))
 }
 
 function despawnUi() {
