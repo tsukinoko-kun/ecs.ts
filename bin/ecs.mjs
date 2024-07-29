@@ -89,8 +89,11 @@ async function build(args) {
             // get all scripts
             const scripts = Array.from(dom.window.document.querySelectorAll("script[src]"))
             for (const script of scripts) {
-                const url = new URL(script.src, adr)
-                let filePath = url.pathname
+                const scriptUrl = new URL(script.src, adr)
+                if (scriptUrl.origin !== url.origin) {
+                    continue
+                }
+                let filePath = scriptUrl.pathname
                 if (filePath.startsWith(viteConfig.base)) {
                     filePath = filePath.slice(viteConfig.base.length)
                 }
@@ -99,7 +102,7 @@ async function build(args) {
                     continue
                 }
                 const content = await readFile(p, "utf-8")
-                const s = new Script(content, { filename: url.pathname })
+                const s = new Script(content, { filename: scriptUrl.pathname })
                 s.runInContext(dom.getInternalVMContext())
             }
 
