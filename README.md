@@ -1,6 +1,8 @@
-# ECS.ts
+# ECS.ts <img src="https://raw.githubusercontent.com/tsukinoko-kun/ecs.ts/main/apps/extension/ecs_64.png" style="height:1em;width:1em;">
 
 Strongly inspired by Bevy
+
+![big plans](https://github.com/user-attachments/assets/ed197376-e95f-4bef-b3c2-486a3f71a61b)
 
 ## Installation
 
